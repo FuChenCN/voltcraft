@@ -1,1 +1,4 @@
-{ "parent": "voltcraft:block/medium_voltage_cable" }
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": { "all": "voltcraft:block/medium_voltage_cable" }
+}
