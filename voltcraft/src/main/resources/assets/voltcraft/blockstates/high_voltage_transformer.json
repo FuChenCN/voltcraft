@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "voltcraft:block/high_voltage_transformer" },
+    "facing=south": { "model": "voltcraft:block/high_voltage_transformer", "y": 180 },
+    "facing=east":  { "model": "voltcraft:block/high_voltage_transformer", "y": 90 },
+    "facing=west":  { "model": "voltcraft:block/high_voltage_transformer", "y": 270 }
+  }
+}

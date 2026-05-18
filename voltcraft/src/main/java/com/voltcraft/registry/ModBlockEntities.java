@@ -2,7 +2,9 @@ package com.voltcraft.registry;
 
 import com.voltcraft.VoltCraft;
 import com.voltcraft.block.CableBlock;
+import com.voltcraft.block.TransformerBlock;
 import com.voltcraft.blockentity.CableBlockEntity;
+import com.voltcraft.blockentity.TransformerBlockEntity;
 import com.voltcraft.electric.CableTier;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.Block;
@@ -25,11 +27,25 @@ public final class ModBlockEntities {
                         .toArray(Block[]::new);
                 return BlockEntityType.Builder.of(
                         (pos, state) -> {
-                            // 通过 state 反查 CableBlock，再读出它的 tier 来构造
                             CableBlock block = (CableBlock) state.getBlock();
                             return new CableBlockEntity(ModBlockEntities.CABLE.get(), pos, state, block.tier());
                         },
                         cableBlocks
+                ).build(null);
+            });
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TransformerBlockEntity>> TRANSFORMER =
+            BLOCK_ENTITIES.register("transformer", () -> {
+                Block[] transformerBlocks = Arrays.stream(CableTier.values())
+                        .map(tier -> ModBlocks.TRANSFORMERS.get(tier).get())
+                        .toArray(Block[]::new);
+                return BlockEntityType.Builder.of(
+                        (pos, state) -> {
+                            TransformerBlock block = (TransformerBlock) state.getBlock();
+                            return new TransformerBlockEntity(
+                                    ModBlockEntities.TRANSFORMER.get(), pos, state, block.outputTier());
+                        },
+                        transformerBlocks
                 ).build(null);
             });
 

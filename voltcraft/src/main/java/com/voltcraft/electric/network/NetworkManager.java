@@ -209,4 +209,17 @@ public final class NetworkManager {
     public int distinctNetworkCount() {
         return new HashSet<>(byPos.values()).size();
     }
+
+    /**
+     * 服务端 tick 末调用：让所有网络分发本 tick 的 pending 输入。
+     * 通过 IdentityHashMap 去重以保证同一网络只 tick 一次。
+     */
+    public void tickAll(Level level) {
+        Set<EnergyNetwork> ticked = Collections.newSetFromMap(new IdentityHashMap<>());
+        for (EnergyNetwork n : byPos.values()) {
+            if (ticked.add(n)) {
+                n.distributeTick(level);
+            }
+        }
+    }
 }

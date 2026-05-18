@@ -42,6 +42,16 @@ public class CableBlockEntity extends BlockEntity {
         return cableTier;
     }
 
+    /**
+     * 当前所属网络。null 表示未在世界中（区块未加载或刚卸载）。
+     */
+    @Nullable
+    public EnergyNetwork network() {
+        Level level = getLevel();
+        if (level == null || level.isClientSide) return null;
+        return NetworkManager.get(level).networkAt(getBlockPos());
+    }
+
     @Nullable
     public VoltageTier voltageTag() {
         return voltageTag;

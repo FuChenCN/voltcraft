@@ -22,6 +22,9 @@ public final class ModCreativeTabs {
                         for (CableTier tier : CableTier.values()) {
                             output.accept(ModBlocks.CABLES.get(tier).get());
                         }
+                        for (CableTier tier : CableTier.values()) {
+                            output.accept(ModBlocks.TRANSFORMERS.get(tier).get());
+                        }
                     })
                     .build());
 

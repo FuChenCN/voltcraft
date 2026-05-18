@@ -2,6 +2,7 @@ package com.voltcraft.registry;
 
 import com.voltcraft.VoltCraft;
 import com.voltcraft.block.CableBlock;
+import com.voltcraft.block.TransformerBlock;
 import com.voltcraft.electric.CableTier;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -22,8 +23,8 @@ public final class ModBlocks {
     public static final DeferredRegister.Blocks BLOCKS =
             DeferredRegister.createBlocks(VoltCraft.MOD_ID);
 
-    /** 四种电缆按 CableTier 索引；注册顺序 = enum 声明顺序。 */
     public static final Map<CableTier, DeferredBlock<CableBlock>> CABLES = createCables();
+    public static final Map<CableTier, DeferredBlock<TransformerBlock>> TRANSFORMERS = createTransformers();
 
     private static Map<CableTier, DeferredBlock<CableBlock>> createCables() {
         EnumMap<CableTier, DeferredBlock<CableBlock>> map = new EnumMap<>(CableTier.class);
@@ -35,6 +36,21 @@ public final class ModBlocks {
                             .strength(0.4f)
                             .sound(SoundType.WOOL)
                             .noOcclusion())
+            ));
+        }
+        return Map.copyOf(map);
+    }
+
+    private static Map<CableTier, DeferredBlock<TransformerBlock>> createTransformers() {
+        EnumMap<CableTier, DeferredBlock<TransformerBlock>> map = new EnumMap<>(CableTier.class);
+        for (CableTier tier : CableTier.values()) {
+            map.put(tier, registerWithItem(
+                    tier.getSerializedName() + "_transformer",
+                    () -> new TransformerBlock(tier, BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.METAL)
+                            .strength(2.5f)
+                            .sound(SoundType.METAL)
+                            .requiresCorrectToolForDrops())
             ));
         }
         return Map.copyOf(map);
