@@ -94,33 +94,51 @@ public final class EnergyNetwork {
     }
 
     /**
-     * 服务端 tick 末调用：把 pendingInput 按比例分发给所有相邻消费者。
+     * 服务端 tick 末调用：
+     * 1. pull 阶段：扫描相邻生产者（canExtract=true），simulate 抽电累加额度
+     * 2. push 阶段：把 pendingInput + 抽来的电分发给相邻消费者（canReceive=true）
+     * 3. commit：按实际分发量回头真正 extract
      *
-     * 当前阶段策略：扫描每根电缆的六个邻面，找到接受 FE 的非电缆方块，
-     * 用一轮 round-robin 把电分给它们，直到 pendingInput 用完或没人收。
+     * 用 simulate-then-commit 二阶段，确保 push 失败时不会真的从生产者抽电。
+     * 同位置同时 canExtract+canReceive 的机器只算消费者，避免把刚送进去的电又抽出来。
      */
     public void distributeTick(Level level) {
-        if (pendingInput <= 0) {
+        Endpoints ep = collectEndpoints(level);
+        long ratedCap = cableTier.ratedTransfer();
+        long budget = Math.min(pendingInput, ratedCap);
+        pendingInput = 0;
+
+        // 1. pull 阶段（simulate）
+        long[] pullPlan = new long[ep.producers.size()];
+        long pulled = 0;
+        if (budget < ratedCap) {
+            long pullCap = ratedCap - budget;
+            for (int i = 0; i < ep.producers.size() && pullCap > 0; i++) {
+                IEnergyStorage src = ep.producers.get(i);
+                int take = (int) Math.min(Integer.MAX_VALUE, pullCap);
+                int got = src.extractEnergy(take, true);
+                if (got > 0) {
+                    pullPlan[i] = got;
+                    pulled += got;
+                    pullCap -= got;
+                }
+            }
+        }
+
+        long total = budget + pulled;
+        if (total <= 0 || ep.consumers.isEmpty()) {
             lastFlow = 0;
             return;
         }
 
-        List<IEnergyStorage> consumers = collectConsumers(level);
-        if (consumers.isEmpty()) {
-            // 没消费者：能量丢弃（电缆没有储能能力）
-            lastFlow = 0;
-            pendingInput = 0;
-            return;
-        }
-
-        long remaining = pendingInput;
+        // 2. push 阶段（real）：round-robin 平均分配
+        long remaining = total;
         long delivered = 0;
-        // 多轮平均分配，直到所有消费者饱和或电用完
         boolean progress = true;
         while (remaining > 0 && progress) {
             progress = false;
-            long perConsumer = Math.max(1, remaining / consumers.size());
-            for (IEnergyStorage c : consumers) {
+            long perConsumer = Math.max(1, remaining / ep.consumers.size());
+            for (IEnergyStorage c : ep.consumers) {
                 if (remaining <= 0) break;
                 int give = (int) Math.min(perConsumer, Math.min(Integer.MAX_VALUE, remaining));
                 int accepted = c.receiveEnergy(give, false);
@@ -132,21 +150,34 @@ public final class EnergyNetwork {
             }
         }
 
+        // 3. commit：按 push 实际消化量，从生产者真正抽电（按比例从 pullPlan 扣除）
+        long needFromProducers = Math.max(0, delivered - budget);
+        if (needFromProducers > 0 && pulled > 0) {
+            for (int i = 0; i < ep.producers.size() && needFromProducers > 0; i++) {
+                long planned = pullPlan[i];
+                if (planned <= 0) continue;
+                int take = (int) Math.min(planned, needFromProducers);
+                int actuallyTaken = ep.producers.get(i).extractEnergy(take, false);
+                needFromProducers -= actuallyTaken;
+            }
+        }
+
+        // 未消化的 budget 部分被丢弃（电缆没有储能）
         lastFlow = delivered;
-        pendingInput = 0;
     }
 
-    private List<IEnergyStorage> collectConsumers(Level level) {
-        List<IEnergyStorage> out = new ArrayList<>();
-        Set<BlockPos> seenConsumers = new HashSet<>();
+    /** 单次扫描分类邻居为生产者 / 消费者。 */
+    private Endpoints collectEndpoints(Level level) {
+        List<IEnergyStorage> producers = new ArrayList<>();
+        List<IEnergyStorage> consumers = new ArrayList<>();
+        Set<BlockPos> seen = new HashSet<>();
         for (BlockPos cable : members) {
             for (Direction d : Direction.values()) {
                 BlockPos neighbor = cable.relative(d);
-                if (members.contains(neighbor)) continue;          // 是同网络电缆
-                if (!seenConsumers.add(neighbor)) continue;         // 邻居方块去重
+                if (members.contains(neighbor)) continue;       // 同网络电缆
+                if (!seen.add(neighbor)) continue;               // 邻居方块去重
                 BlockEntity be = level.getBlockEntity(neighbor);
                 if (be == null) continue;
-                // 排除其它电缆（不同等级或断网的）
                 if (be.getBlockState().getBlock() instanceof CableBlock) continue;
                 IEnergyStorage es = level.getCapability(
                         Capabilities.EnergyStorage.BLOCK,
@@ -155,13 +186,19 @@ public final class EnergyNetwork {
                         be,
                         d.getOpposite()
                 );
-                if (es != null && es.canReceive()) {
-                    out.add(es);
+                if (es == null) continue;
+                // 优先归类为消费者，避免双向机器的自循环
+                if (es.canReceive()) {
+                    consumers.add(es);
+                } else if (es.canExtract()) {
+                    producers.add(es);
                 }
             }
         }
-        return out;
+        return new Endpoints(producers, consumers);
     }
+
+    private record Endpoints(List<IEnergyStorage> producers, List<IEnergyStorage> consumers) {}
 
     @Override
     public String toString() {
