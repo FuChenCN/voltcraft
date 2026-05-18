@@ -258,5 +258,108 @@ Pixel $bmp 15 25 (Hex '4B5563')
 Pixel $bmp 16 26 (Hex '4B5563')
 Save-Bmp $bmp 'breaker_side'
 
+# === Terminal: 3 colored screw posts (hot/neutral/ground) on a faceplate ===
+$terminalBody = Hex '475569'
+$terminalHi   = Hex '94A3B8'
+$terminalDark = Hex '0F172A'
+
+function Make-TerminalFront($tier, $state) {
+    $c = $tierColors[$tier]
+    $bmp = New-Bmp
+    Fill $bmp $terminalBody
+    # bevel
+    Rect $bmp 0 0 32 1 $terminalHi
+    Rect $bmp 0 0 1 32 $terminalHi
+    Rect $bmp 0 31 32 1 $terminalDark
+    Rect $bmp 31 0 1 32 $terminalDark
+    # tier strip top
+    Rect $bmp 2 2 28 3 $c.main
+    Rect $bmp 2 2 28 1 $c.accent
+    # 3 screw posts L (hot=red), N (neutral=blue), E (ground=yellow/green)
+    # base color depends on state
+    $hotColor    = Hex 'EF4444'
+    $neutralColor= Hex '3B82F6'
+    $groundColor = Hex 'EAB308'
+    if ($state -eq 'fault') {
+        # MISSING_GROUND or HOT_NEUTRAL_SWAPPED: ground or hot/neutral darkened
+        $groundColor = Hex '4B5563'    # ground "missing"
+    } elseif ($state -eq 'short') {
+        # SHORT: cross wire visible between hot and neutral/ground (red overlay)
+        $hotColor = Hex 'B91C1C'
+        $neutralColor = Hex '7F1D1D'
+    }
+    # 3 posts, evenly spaced
+    $posY = 14
+    $posL = 6
+    $posN = 14
+    $posE = 22
+    # screw caps with tiny center divot
+    function DrawPost([int]$x, [int]$y, [System.Drawing.Color]$col) {
+        Rect $bmp $x $y 6 8 $terminalDark
+        Rect $bmp ($x+1) ($y+1) 4 6 $col
+        Pixel $bmp ($x+2) ($y+3) $terminalDark
+        Pixel $bmp ($x+3) ($y+3) $terminalDark
+        Pixel $bmp ($x+2) ($y+4) $terminalDark
+        Pixel $bmp ($x+3) ($y+4) $terminalDark
+    }
+    DrawPost $posL $posY $hotColor
+    DrawPost $posN $posY $neutralColor
+    DrawPost $posE $posY $groundColor
+    # post labels
+    Rect $bmp ($posL+1) 9 4 1 (Hex 'F8FAFC')
+    Rect $bmp ($posN+1) 9 4 1 (Hex 'F8FAFC')
+    Rect $bmp ($posE+1) 9 4 1 (Hex 'F8FAFC')
+
+    if ($state -eq 'short') {
+        # red diagonal "danger" stripe across the face
+        for ($i = 0; $i -lt 32; $i++) {
+            Pixel $bmp $i ((28 - $i) % 32) (Hex 'EF4444')
+        }
+    }
+    if ($state -eq 'fault') {
+        # yellow warning triangle small in corner
+        Pixel $bmp 26 26 (Hex 'FACC15')
+        Pixel $bmp 25 27 (Hex 'FACC15')
+        Pixel $bmp 27 27 (Hex 'FACC15')
+        Pixel $bmp 24 28 (Hex 'FACC15')
+        Pixel $bmp 25 28 (Hex 'FACC15')
+        Pixel $bmp 26 28 (Hex 'FACC15')
+        Pixel $bmp 27 28 (Hex 'FACC15')
+        Pixel $bmp 28 28 (Hex 'FACC15')
+        Pixel $bmp 26 27 (Hex '111827')
+    }
+    Save-Bmp $bmp "${tier}_voltage_terminal_$state"
+}
+
+foreach ($t in @('low','medium','high','extra_high')) {
+    Make-TerminalFront $t 'correct'
+    Make-TerminalFront $t 'fault'
+    Make-TerminalFront $t 'short'
+}
+
+# Shared terminal top + side
+$bmp = New-Bmp
+Fill $bmp $terminalBody
+Rect $bmp 0 0 32 1 $terminalHi
+Rect $bmp 0 0 1 32 $terminalHi
+Rect $bmp 0 31 32 1 $terminalDark
+Rect $bmp 31 0 1 32 $terminalDark
+# 3 small holes for cable entry on top
+Rect $bmp 8 12 4 8 $terminalDark
+Rect $bmp 14 12 4 8 $terminalDark
+Rect $bmp 20 12 4 8 $terminalDark
+Save-Bmp $bmp 'terminal_top'
+
+$bmp = New-Bmp
+Fill $bmp $terminalBody
+Rect $bmp 0 0 32 1 $terminalHi
+Rect $bmp 0 0 1 32 $terminalHi
+Rect $bmp 0 31 32 1 $terminalDark
+Rect $bmp 31 0 1 32 $terminalDark
+# horizontal mounting bracket
+Rect $bmp 4 14 24 4 $terminalDark
+Rect $bmp 5 15 22 2 (Hex '1F2937')
+Save-Bmp $bmp 'terminal_side'
+
 Write-Host ""
 Write-Host "All textures generated to: $out"

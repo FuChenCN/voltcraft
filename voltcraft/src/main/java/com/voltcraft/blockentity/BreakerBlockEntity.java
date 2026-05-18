@@ -87,6 +87,18 @@ public class BreakerBlockEntity extends BlockEntity {
             return;
         }
 
+        // 短路检测：扫描上游（输入面）网络是否被端子打了短路标志
+        Direction inDir = inputFace();
+        BlockPos inPos = getBlockPos().relative(inDir);
+        BlockState inState = level.getBlockState(inPos);
+        if (inState.getBlock() instanceof CableBlock inCable && inCable.tier() == tier) {
+            EnergyNetwork inNet = NetworkManager.get(level).networkAt(inPos);
+            if (inNet != null && inNet.hasShortCircuit()) {
+                trip(level, BreakerState.TRIPPED_SHORT);
+                return;
+            }
+        }
+
         Direction outDir = outputFace();
         BlockPos outPos = getBlockPos().relative(outDir);
         BlockState outState = level.getBlockState(outPos);
@@ -97,10 +109,15 @@ public class BreakerBlockEntity extends BlockEntity {
         EnergyNetwork outNet = NetworkManager.get(level).networkAt(outPos);
         if (outNet == null) return;
 
+        // 下游短路也跳：可能短路源在下游某个端子上
+        if (outNet.hasShortCircuit()) {
+            trip(level, BreakerState.TRIPPED_SHORT);
+            return;
+        }
+
         // 推 buffer 里的能量到下游电缆网络
         int available = buffer.getEnergyStored();
         if (available <= 0) {
-            // 即使没流量也要 tick 过载计数（应当衰减归零）
             decayOverload();
             lastFlow = 0;
             return;

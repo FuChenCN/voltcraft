@@ -1,0 +1,24 @@
+{
+  "variants": {
+    "facing=north,wiring=correct":            { "model": "voltcraft:block/high_voltage_terminal_correct" },
+    "facing=south,wiring=correct":            { "model": "voltcraft:block/high_voltage_terminal_correct", "y": 180 },
+    "facing=east,wiring=correct":             { "model": "voltcraft:block/high_voltage_terminal_correct", "y": 90 },
+    "facing=west,wiring=correct":             { "model": "voltcraft:block/high_voltage_terminal_correct", "y": 270 },
+    "facing=north,wiring=hot_neutral_swapped": { "model": "voltcraft:block/high_voltage_terminal_fault" },
+    "facing=south,wiring=hot_neutral_swapped": { "model": "voltcraft:block/high_voltage_terminal_fault", "y": 180 },
+    "facing=east,wiring=hot_neutral_swapped":  { "model": "voltcraft:block/high_voltage_terminal_fault", "y": 90 },
+    "facing=west,wiring=hot_neutral_swapped":  { "model": "voltcraft:block/high_voltage_terminal_fault", "y": 270 },
+    "facing=north,wiring=missing_ground":     { "model": "voltcraft:block/high_voltage_terminal_fault" },
+    "facing=south,wiring=missing_ground":     { "model": "voltcraft:block/high_voltage_terminal_fault", "y": 180 },
+    "facing=east,wiring=missing_ground":      { "model": "voltcraft:block/high_voltage_terminal_fault", "y": 90 },
+    "facing=west,wiring=missing_ground":      { "model": "voltcraft:block/high_voltage_terminal_fault", "y": 270 },
+    "facing=north,wiring=short_hot_neutral":  { "model": "voltcraft:block/high_voltage_terminal_short" },
+    "facing=south,wiring=short_hot_neutral":  { "model": "voltcraft:block/high_voltage_terminal_short", "y": 180 },
+    "facing=east,wiring=short_hot_neutral":   { "model": "voltcraft:block/high_voltage_terminal_short", "y": 90 },
+    "facing=west,wiring=short_hot_neutral":   { "model": "voltcraft:block/high_voltage_terminal_short", "y": 270 },
+    "facing=north,wiring=short_hot_ground":   { "model": "voltcraft:block/high_voltage_terminal_short" },
+    "facing=south,wiring=short_hot_ground":   { "model": "voltcraft:block/high_voltage_terminal_short", "y": 180 },
+    "facing=east,wiring=short_hot_ground":    { "model": "voltcraft:block/high_voltage_terminal_short", "y": 90 },
+    "facing=west,wiring=short_hot_ground":    { "model": "voltcraft:block/high_voltage_terminal_short", "y": 270 }
+  }
+}

@@ -3,9 +3,11 @@ package com.voltcraft.registry;
 import com.voltcraft.VoltCraft;
 import com.voltcraft.block.BreakerBlock;
 import com.voltcraft.block.CableBlock;
+import com.voltcraft.block.TerminalBlock;
 import com.voltcraft.block.TransformerBlock;
 import com.voltcraft.blockentity.BreakerBlockEntity;
 import com.voltcraft.blockentity.CableBlockEntity;
+import com.voltcraft.blockentity.TerminalBlockEntity;
 import com.voltcraft.blockentity.TransformerBlockEntity;
 import com.voltcraft.electric.CableTier;
 import net.minecraft.core.registries.Registries;
@@ -63,6 +65,21 @@ public final class ModBlockEntities {
                                     ModBlockEntities.BREAKER.get(), pos, state, block.tier());
                         },
                         breakerBlocks
+                ).build(null);
+            });
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TerminalBlockEntity>> TERMINAL =
+            BLOCK_ENTITIES.register("terminal", () -> {
+                Block[] terminalBlocks = Arrays.stream(CableTier.values())
+                        .map(tier -> ModBlocks.TERMINALS.get(tier).get())
+                        .toArray(Block[]::new);
+                return BlockEntityType.Builder.of(
+                        (pos, state) -> {
+                            TerminalBlock block = (TerminalBlock) state.getBlock();
+                            return new TerminalBlockEntity(
+                                    ModBlockEntities.TERMINAL.get(), pos, state, block.tier());
+                        },
+                        terminalBlocks
                 ).build(null);
             });
 

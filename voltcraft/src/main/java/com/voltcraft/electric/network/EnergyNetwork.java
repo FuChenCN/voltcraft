@@ -33,6 +33,16 @@ public final class EnergyNetwork {
     @Nullable
     private VoltageTier voltageTag;
 
+    /**
+     * 短路源位置。非 null 表示本网络上有端子检测到短路，
+     * 空开看到这个标志会立即 TRIPPED_SHORT。每 tick 由端子重新写入；
+     * 端子停止写入后 staleTicks 计数到上限即视为故障消除。
+     */
+    @Nullable
+    private BlockPos shortCircuitSource;
+    private int shortCircuitStaleTicks;
+    private static final int SHORT_STALE_THRESHOLD = 20; // 1s 没续写就清空
+
     /** 变压器/储能等本 tick 推入的 FE，等待 tick 末分发。 */
     private long pendingInput;
 
@@ -70,6 +80,21 @@ public final class EnergyNetwork {
 
     public long lastFlow() { return lastFlow; }
 
+    /** 端子在 serverTick 中调用，标记本网络上有短路。 */
+    public void reportShortCircuit(BlockPos source) {
+        this.shortCircuitSource = source.immutable();
+        this.shortCircuitStaleTicks = 0;
+    }
+
+    @Nullable
+    public BlockPos shortCircuitSource() {
+        return shortCircuitSource;
+    }
+
+    public boolean hasShortCircuit() {
+        return shortCircuitSource != null;
+    }
+
     /**
      * 由变压器/储能调用，向网络注入 FE。受电缆等级 ratedTransfer 上限约束。
      * 当前 tick 累计的输入会在 distributeTick 中分发。
@@ -103,6 +128,21 @@ public final class EnergyNetwork {
      * 同位置同时 canExtract+canReceive 的机器只算消费者，避免把刚送进去的电又抽出来。
      */
     public void distributeTick(Level level) {
+        // 短路标志衰减
+        if (shortCircuitSource != null) {
+            shortCircuitStaleTicks++;
+            if (shortCircuitStaleTicks >= SHORT_STALE_THRESHOLD) {
+                shortCircuitSource = null;
+                shortCircuitStaleTicks = 0;
+            }
+        }
+        // 短路时整网停止传输（空开会在自己的 tick 中自行跳闸）
+        if (shortCircuitSource != null) {
+            pendingInput = 0;
+            lastFlow = 0;
+            return;
+        }
+
         Endpoints ep = collectEndpoints(level);
         long ratedCap = cableTier.ratedTransfer();
         long budget = Math.min(pendingInput, ratedCap);

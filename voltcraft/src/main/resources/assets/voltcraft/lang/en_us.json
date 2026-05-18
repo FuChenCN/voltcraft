@@ -12,8 +12,13 @@
   "block.voltcraft.medium_voltage_breaker": "Medium Voltage Breaker (8kFE/t)",
   "block.voltcraft.high_voltage_breaker": "High Voltage Breaker (32kFE/t)",
   "block.voltcraft.extra_high_voltage_breaker": "Extra High Voltage Breaker (128kFE/t)",
+  "block.voltcraft.low_voltage_terminal": "Low Voltage Terminal",
+  "block.voltcraft.medium_voltage_terminal": "Medium Voltage Terminal",
+  "block.voltcraft.high_voltage_terminal": "High Voltage Terminal",
+  "block.voltcraft.extra_high_voltage_terminal": "Extra High Voltage Terminal",
   "voltcraft.breaker.reset": "Breaker reset.",
   "voltcraft.breaker.already_closed": "Breaker is already closed.",
+  "voltcraft.terminal.wiring_set": "Wiring → %s",
 
   "voltcraft.tier.low_voltage": "Low",
   "voltcraft.tier.medium_voltage": "Medium",
@@ -30,6 +35,12 @@
   "voltcraft.breaker_state.tripped_short": "Tripped (Short Circuit)",
   "voltcraft.breaker_state.tripped_leakage": "Tripped (Leakage)",
 
+  "voltcraft.wiring.correct": "Correct",
+  "voltcraft.wiring.hot_neutral_swapped": "Hot/Neutral Swapped",
+  "voltcraft.wiring.missing_ground": "Missing Ground",
+  "voltcraft.wiring.short_hot_neutral": "Short: Hot↔Neutral",
+  "voltcraft.wiring.short_hot_ground": "Short: Hot↔Ground",
+
   "voltcraft.jade.cable_tier": "Tier: %s",
   "voltcraft.jade.voltage": "Voltage: %s",
   "voltcraft.jade.voltage_unpowered": "Voltage: §7unpowered",
@@ -38,5 +49,6 @@
   "voltcraft.jade.network_size": "Network: %s cables",
   "voltcraft.jade.transformer_output": "Output: %s",
   "voltcraft.jade.buffer": "Buffer: %s / %s FE",
-  "voltcraft.jade.breaker_state": "State: %s"
+  "voltcraft.jade.breaker_state": "State: %s",
+  "voltcraft.jade.wiring": "Wiring: %s"
 }

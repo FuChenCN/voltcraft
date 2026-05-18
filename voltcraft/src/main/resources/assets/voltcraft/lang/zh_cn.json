@@ -12,8 +12,13 @@
   "block.voltcraft.medium_voltage_breaker": "中压空开 (8kFE/t)",
   "block.voltcraft.high_voltage_breaker": "高压空开 (32kFE/t)",
   "block.voltcraft.extra_high_voltage_breaker": "超高压空开 (128kFE/t)",
+  "block.voltcraft.low_voltage_terminal": "低压接线端子",
+  "block.voltcraft.medium_voltage_terminal": "中压接线端子",
+  "block.voltcraft.high_voltage_terminal": "高压接线端子",
+  "block.voltcraft.extra_high_voltage_terminal": "超高压接线端子",
   "voltcraft.breaker.reset": "已合闸。",
   "voltcraft.breaker.already_closed": "空开已处于合闸状态。",
+  "voltcraft.terminal.wiring_set": "接线 → %s",
 
   "voltcraft.tier.low_voltage": "低压",
   "voltcraft.tier.medium_voltage": "中压",
@@ -30,6 +35,12 @@
   "voltcraft.breaker_state.tripped_short": "跳闸（短路）",
   "voltcraft.breaker_state.tripped_leakage": "跳闸（漏电）",
 
+  "voltcraft.wiring.correct": "正常",
+  "voltcraft.wiring.hot_neutral_swapped": "火零反接",
+  "voltcraft.wiring.missing_ground": "地线未接",
+  "voltcraft.wiring.short_hot_neutral": "短路：火↔零",
+  "voltcraft.wiring.short_hot_ground": "短路：火↔地",
+
   "voltcraft.jade.cable_tier": "等级：%s",
   "voltcraft.jade.voltage": "电压：%s",
   "voltcraft.jade.voltage_unpowered": "电压：§7未通电",
@@ -38,5 +49,6 @@
   "voltcraft.jade.network_size": "网络：%s 段电缆",
   "voltcraft.jade.transformer_output": "输出：%s",
   "voltcraft.jade.buffer": "缓存：%s / %s FE",
-  "voltcraft.jade.breaker_state": "状态：%s"
+  "voltcraft.jade.breaker_state": "状态：%s",
+  "voltcraft.jade.wiring": "接线：%s"
 }

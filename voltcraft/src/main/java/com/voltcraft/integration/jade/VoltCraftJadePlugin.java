@@ -3,6 +3,7 @@ package com.voltcraft.integration.jade;
 import com.voltcraft.VoltCraft;
 import com.voltcraft.block.BreakerBlock;
 import com.voltcraft.block.CableBlock;
+import com.voltcraft.block.TerminalBlock;
 import com.voltcraft.block.TransformerBlock;
 import snownee.jade.api.IWailaClientRegistration;
 import snownee.jade.api.IWailaCommonRegistration;
@@ -22,6 +23,7 @@ public final class VoltCraftJadePlugin implements IWailaPlugin {
         registration.registerBlockDataProvider(CableJadeProvider.INSTANCE, com.voltcraft.blockentity.CableBlockEntity.class);
         registration.registerBlockDataProvider(TransformerJadeProvider.INSTANCE, com.voltcraft.blockentity.TransformerBlockEntity.class);
         registration.registerBlockDataProvider(BreakerJadeProvider.INSTANCE, com.voltcraft.blockentity.BreakerBlockEntity.class);
+        registration.registerBlockDataProvider(TerminalJadeProvider.INSTANCE, com.voltcraft.blockentity.TerminalBlockEntity.class);
     }
 
     @Override
@@ -29,5 +31,6 @@ public final class VoltCraftJadePlugin implements IWailaPlugin {
         registration.registerBlockComponent(CableJadeProvider.INSTANCE, CableBlock.class);
         registration.registerBlockComponent(TransformerJadeProvider.INSTANCE, TransformerBlock.class);
         registration.registerBlockComponent(BreakerJadeProvider.INSTANCE, BreakerBlock.class);
+        registration.registerBlockComponent(TerminalJadeProvider.INSTANCE, TerminalBlock.class);
     }
 }

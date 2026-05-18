@@ -3,6 +3,7 @@ package com.voltcraft.event;
 import com.voltcraft.VoltCraft;
 import com.voltcraft.blockentity.BreakerBlockEntity;
 import com.voltcraft.blockentity.CableBlockEntity;
+import com.voltcraft.blockentity.TerminalBlockEntity;
 import com.voltcraft.blockentity.TransformerBlockEntity;
 import com.voltcraft.electric.capability.CableEnergyHandler;
 import com.voltcraft.registry.ModBlockEntities;
@@ -46,6 +47,16 @@ public final class ModBusEvents {
                 (BreakerBlockEntity be, Direction side) -> {
                     if (side == null) return be.inputHandler();
                     return side == be.inputFace() ? be.inputHandler() : null;
+                }
+        );
+
+        // 接线端子仅在机器面暴露；短路时拒收
+        event.registerBlockEntity(
+                Capabilities.EnergyStorage.BLOCK,
+                ModBlockEntities.TERMINAL.get(),
+                (TerminalBlockEntity be, Direction side) -> {
+                    if (side == null) return be.machineHandler();
+                    return side == be.machineFace() ? be.machineHandler() : null;
                 }
         );
     }

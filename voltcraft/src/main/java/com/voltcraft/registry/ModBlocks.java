@@ -3,6 +3,7 @@ package com.voltcraft.registry;
 import com.voltcraft.VoltCraft;
 import com.voltcraft.block.BreakerBlock;
 import com.voltcraft.block.CableBlock;
+import com.voltcraft.block.TerminalBlock;
 import com.voltcraft.block.TransformerBlock;
 import com.voltcraft.electric.CableTier;
 import net.minecraft.world.item.BlockItem;
@@ -27,6 +28,7 @@ public final class ModBlocks {
     public static final Map<CableTier, DeferredBlock<CableBlock>> CABLES = createCables();
     public static final Map<CableTier, DeferredBlock<TransformerBlock>> TRANSFORMERS = createTransformers();
     public static final Map<CableTier, DeferredBlock<BreakerBlock>> BREAKERS = createBreakers();
+    public static final Map<CableTier, DeferredBlock<TerminalBlock>> TERMINALS = createTerminals();
 
     private static Map<CableTier, DeferredBlock<CableBlock>> createCables() {
         EnumMap<CableTier, DeferredBlock<CableBlock>> map = new EnumMap<>(CableTier.class);
@@ -66,6 +68,21 @@ public final class ModBlocks {
                     () -> new BreakerBlock(tier, BlockBehaviour.Properties.of()
                             .mapColor(MapColor.METAL)
                             .strength(2.0f)
+                            .sound(SoundType.METAL)
+                            .requiresCorrectToolForDrops())
+            ));
+        }
+        return Map.copyOf(map);
+    }
+
+    private static Map<CableTier, DeferredBlock<TerminalBlock>> createTerminals() {
+        EnumMap<CableTier, DeferredBlock<TerminalBlock>> map = new EnumMap<>(CableTier.class);
+        for (CableTier tier : CableTier.values()) {
+            map.put(tier, registerWithItem(
+                    tier.getSerializedName() + "_terminal",
+                    () -> new TerminalBlock(tier, BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.METAL)
+                            .strength(1.5f)
                             .sound(SoundType.METAL)
                             .requiresCorrectToolForDrops())
             ));
