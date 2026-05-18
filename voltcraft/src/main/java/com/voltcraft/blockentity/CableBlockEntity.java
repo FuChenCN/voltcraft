@@ -2,9 +2,12 @@ package com.voltcraft.blockentity;
 
 import com.voltcraft.electric.CableTier;
 import com.voltcraft.electric.VoltageTier;
+import com.voltcraft.electric.network.EnergyNetwork;
+import com.voltcraft.electric.network.NetworkManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -51,6 +54,28 @@ public class CableBlockEntity extends BlockEntity {
         }
         this.voltageTag = voltageTag;
         setChanged();
+    }
+
+    /**
+     * 区块加载或方块新放置时触发。把自己注册进 NetworkManager。
+     * 持久化的电压标签会在 loadAdditional 中先恢复，加入网络后由
+     * NetworkManager 在合并时同步整网电压。
+     */
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        Level level = getLevel();
+        if (level != null && !level.isClientSide) {
+            EnergyNetwork net = NetworkManager.get(level).onCableAdded(level, getBlockPos(), cableTier);
+            // 如果本节点持有电压标签而网络尚未设置，则把电压传给网络
+            if (voltageTag != null && net.voltageTag() == null) {
+                try {
+                    net.setVoltageTag(voltageTag);
+                } catch (IllegalArgumentException ignored) {
+                    // 强绑定保证不会发生，兜底忽略
+                }
+            }
+        }
     }
 
     @Override
