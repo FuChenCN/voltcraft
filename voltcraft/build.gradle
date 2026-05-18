@@ -19,7 +19,14 @@ sourceSets.main.resources {
 }
 
 repositories {
-    // 仓库统一在 settings.gradle 的 dependencyResolutionManagement 中声明
+    // 仓库统一在 settings.gradle 的 dependencyResolutionManagement 中声明；
+    // 但 moddev 插件会向项目级 repositories 动态注入 NeoForged 仓库，
+    // 一旦项目级仓库非空，settings 级仓库会被忽略（参见 RepositoriesMode 默认行为），
+    // 所以这里需要把 Jade 等可选依赖的源也声明一遍。
+    maven {
+        name = 'Modrinth'
+        url = uri('https://api.modrinth.com/maven')
+    }
 }
 
 base {
@@ -78,7 +85,9 @@ configurations {
 }
 
 dependencies {
-    // 后续阶段在此声明 JEI/Jade 等可选依赖
+    // Jade（悬停信息 mod）：编译期可见，运行时也加载，但不作为 publish 依赖
+    compileOnly "maven.modrinth:jade:${jade_version}"
+    localRuntime "maven.modrinth:jade:${jade_version}"
 }
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {

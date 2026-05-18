@@ -13,5 +13,30 @@
   "block.voltcraft.high_voltage_breaker": "高压空开 (32kFE/t)",
   "block.voltcraft.extra_high_voltage_breaker": "超高压空开 (128kFE/t)",
   "voltcraft.breaker.reset": "已合闸。",
-  "voltcraft.breaker.already_closed": "空开已处于合闸状态。"
+  "voltcraft.breaker.already_closed": "空开已处于合闸状态。",
+
+  "voltcraft.tier.low_voltage": "低压",
+  "voltcraft.tier.medium_voltage": "中压",
+  "voltcraft.tier.high_voltage": "高压",
+  "voltcraft.tier.extra_high_voltage": "超高压",
+
+  "voltcraft.voltage.low": "220V",
+  "voltcraft.voltage.medium": "10kV",
+  "voltcraft.voltage.high": "35kV",
+  "voltcraft.voltage.extra_high": "110kV",
+
+  "voltcraft.breaker_state.closed": "合闸",
+  "voltcraft.breaker_state.tripped_overload": "跳闸（过载）",
+  "voltcraft.breaker_state.tripped_short": "跳闸（短路）",
+  "voltcraft.breaker_state.tripped_leakage": "跳闸（漏电）",
+
+  "voltcraft.jade.cable_tier": "等级：%s",
+  "voltcraft.jade.voltage": "电压：%s",
+  "voltcraft.jade.voltage_unpowered": "电压：§7未通电",
+  "voltcraft.jade.flow": "流量：%s / %s FE/t",
+  "voltcraft.jade.amps": "电流：%s A",
+  "voltcraft.jade.network_size": "网络：%s 段电缆",
+  "voltcraft.jade.transformer_output": "输出：%s",
+  "voltcraft.jade.buffer": "缓存：%s / %s FE",
+  "voltcraft.jade.breaker_state": "状态：%s"
 }

@@ -13,5 +13,30 @@
   "block.voltcraft.high_voltage_breaker": "High Voltage Breaker (32kFE/t)",
   "block.voltcraft.extra_high_voltage_breaker": "Extra High Voltage Breaker (128kFE/t)",
   "voltcraft.breaker.reset": "Breaker reset.",
-  "voltcraft.breaker.already_closed": "Breaker is already closed."
+  "voltcraft.breaker.already_closed": "Breaker is already closed.",
+
+  "voltcraft.tier.low_voltage": "Low",
+  "voltcraft.tier.medium_voltage": "Medium",
+  "voltcraft.tier.high_voltage": "High",
+  "voltcraft.tier.extra_high_voltage": "Extra High",
+
+  "voltcraft.voltage.low": "220V",
+  "voltcraft.voltage.medium": "10kV",
+  "voltcraft.voltage.high": "35kV",
+  "voltcraft.voltage.extra_high": "110kV",
+
+  "voltcraft.breaker_state.closed": "Closed",
+  "voltcraft.breaker_state.tripped_overload": "Tripped (Overload)",
+  "voltcraft.breaker_state.tripped_short": "Tripped (Short Circuit)",
+  "voltcraft.breaker_state.tripped_leakage": "Tripped (Leakage)",
+
+  "voltcraft.jade.cable_tier": "Tier: %s",
+  "voltcraft.jade.voltage": "Voltage: %s",
+  "voltcraft.jade.voltage_unpowered": "Voltage: §7unpowered",
+  "voltcraft.jade.flow": "Flow: %s / %s FE/t",
+  "voltcraft.jade.amps": "Current: %s A",
+  "voltcraft.jade.network_size": "Network: %s cables",
+  "voltcraft.jade.transformer_output": "Output: %s",
+  "voltcraft.jade.buffer": "Buffer: %s / %s FE",
+  "voltcraft.jade.breaker_state": "State: %s"
 }
