@@ -54,5 +54,12 @@
   "voltcraft.jade.buffer": "Buffer: %s / %s FE",
   "voltcraft.jade.breaker_state": "State: %s",
   "voltcraft.jade.wiring": "Wiring: %s",
-  "entity.voltcraft.soft_cable": "Soft Cable"
+  "entity.voltcraft.soft_cable": "Soft Cable",
+  "item.voltcraft.wire_tool": "Wire Tool",
+  "voltcraft.wire_tool.first_picked": "Anchor [%s] at %s selected. Right-click another to connect.",
+  "voltcraft.wire_tool.same_block": "Cannot connect a wire to the same block.",
+  "voltcraft.wire_tool.phase_mismatch": "Phase mismatch: first %s vs second %s.",
+  "voltcraft.wire_tool.first_taken": "First anchor was taken by another wire. Selection cleared.",
+  "voltcraft.wire_tool.no_free_anchor": "No free anchor on this block.",
+  "voltcraft.wire_tool.connected": "Wire connected (phase %s)."
 }

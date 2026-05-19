@@ -54,5 +54,12 @@
   "voltcraft.jade.buffer": "缓存：%s / %s FE",
   "voltcraft.jade.breaker_state": "状态：%s",
   "voltcraft.jade.wiring": "接线：%s",
-  "entity.voltcraft.soft_cable": "软线"
+  "entity.voltcraft.soft_cable": "软线",
+  "item.voltcraft.wire_tool": "接线钳",
+  "voltcraft.wire_tool.first_picked": "已选中接线柱 [%s] @ %s，右键另一处完成连接。",
+  "voltcraft.wire_tool.same_block": "不能在同一个方块上连线。",
+  "voltcraft.wire_tool.phase_mismatch": "相位不匹配：起点 %s 与终点 %s。",
+  "voltcraft.wire_tool.first_taken": "起点接线柱已被其他软线占用，已重置选择。",
+  "voltcraft.wire_tool.no_free_anchor": "这个方块没有空闲接线柱。",
+  "voltcraft.wire_tool.connected": "软线已连接（%s 相）。"
 }
