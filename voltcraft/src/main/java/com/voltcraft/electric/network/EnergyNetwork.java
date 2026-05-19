@@ -2,6 +2,7 @@ package com.voltcraft.electric.network;
 
 import com.voltcraft.block.CableBlock;
 import com.voltcraft.electric.CableTier;
+import com.voltcraft.electric.Phase;
 import com.voltcraft.electric.VoltageTier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -22,12 +23,18 @@ import java.util.UUID;
  * 一条电力线路。对应设计文档 2.2.1：
  * 一组连通的同等级电缆 + 其上的端子/保护器件，共享同一个电压标签。
  *
+ * 三相重构后（2026-05-19）：
+ *   每个 EnergyNetwork 绑定一个 {@link Phase}（LIVE / NEUTRAL / EARTH），
+ *   或 {@link Phase#LEGACY} 表示旧硬电缆未分相状态。L/N 各自传递一半 FE，
+ *   E 平时零流量，仅由 RCD 节点通过 {@link #injectLeakage} 注入漏电流。
+ *
  * 线程模型：仅服务端线程访问。
  */
 public final class EnergyNetwork {
 
     private final UUID id = UUID.randomUUID();
     private final CableTier cableTier;
+    private final Phase phase;
     private final Set<BlockPos> members = new HashSet<>();
 
     @Nullable
@@ -52,16 +59,33 @@ public final class EnergyNetwork {
     /** 本 tick 已被 pullEnergy 拿走的 FE，distributeTick 末尾合入 lastFlow。 */
     private long pulledThisTick;
 
+    /**
+     * 仅 EARTH 相用：本 tick 累计的漏电流（FE/t 等效）。
+     * 由各 RCD 节点在自己的 serverTick 中通过 {@link #injectLeakage} 写入：
+     * 节点对账上游 L 流量和 N 流量，差额作为漏电注入到对应的 EARTH 网络。
+     * RCD 模块在 distributeTick 后读取 {@link #leakageCurrent()} 决定是否跳闸。
+     * 工作相（L/N/LEGACY）上调用 injectLeakage 是 no-op。
+     */
+    private long leakageThisTick;
+    private long leakageCurrent;
+
     /** 本 tick 已注入但未分发的 FE。供空开/端子 pullEnergy 透视上游。 */
     public long pendingInput() { return pendingInput; }
 
     public EnergyNetwork(CableTier cableTier) {
+        this(cableTier, Phase.LEGACY);
+    }
+
+    public EnergyNetwork(CableTier cableTier, Phase phase) {
         this.cableTier = cableTier;
+        this.phase = phase;
     }
 
     public UUID id() { return id; }
 
     public CableTier cableTier() { return cableTier; }
+
+    public Phase phase() { return phase; }
 
     public Set<BlockPos> members() { return Collections.unmodifiableSet(members); }
 
@@ -85,6 +109,19 @@ public final class EnergyNetwork {
     }
 
     public long lastFlow() { return lastFlow; }
+
+    /**
+     * RCD 节点在本 tick 注入漏电流。仅 EARTH 相生效，其它相忽略。
+     * 多次注入累加，distributeTick 末尾收口为 leakageCurrent。
+     */
+    public void injectLeakage(long amount) {
+        if (phase != Phase.EARTH) return;
+        if (amount <= 0) return;
+        leakageThisTick += amount;
+    }
+
+    /** RCD 在 distributeTick 之后读取，决定是否跳闸。 */
+    public long leakageCurrent() { return leakageCurrent; }
 
     /** 端子在 serverTick 中调用，标记本网络上有短路。 */
     public void reportShortCircuit(BlockPos source) {
@@ -207,6 +244,8 @@ public final class EnergyNetwork {
             pendingInput = 0;
             lastFlow = 0;
             pulledThisTick = 0;
+            leakageCurrent = leakageThisTick;
+            leakageThisTick = 0;
             return;
         }
 
@@ -236,6 +275,8 @@ public final class EnergyNetwork {
         if (total <= 0 || ep.consumers.isEmpty()) {
             lastFlow = pulledThisTick;
             pulledThisTick = 0;
+            leakageCurrent = leakageThisTick;
+            leakageThisTick = 0;
             return;
         }
 
@@ -273,6 +314,8 @@ public final class EnergyNetwork {
         // 未消化的 budget 部分被丢弃（电缆没有储能）
         lastFlow = delivered + pulledThisTick;
         pulledThisTick = 0;
+        leakageCurrent = leakageThisTick;
+        leakageThisTick = 0;
     }
 
     /** 单次扫描分类邻居为生产者 / 消费者。 */
@@ -312,6 +355,7 @@ public final class EnergyNetwork {
     @Override
     public String toString() {
         return "EnergyNetwork{id=" + id + ", tier=" + cableTier
+                + ", phase=" + phase
                 + ", voltage=" + voltageTag + ", size=" + members.size() + "}";
     }
 }
