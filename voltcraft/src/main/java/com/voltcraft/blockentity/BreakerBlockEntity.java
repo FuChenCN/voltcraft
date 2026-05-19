@@ -47,6 +47,13 @@ public class BreakerBlockEntity extends BlockEntity implements WireAnchorOwner {
     private static final int OVERLOAD_HOLD_TICKS = 100;
     private static final double OVERLOAD_FACTOR_INSTANT = 2.00;
 
+    /**
+     * RCD 灵敏度：30 mA 等效——在 220V 等效电压下大约 6 FE/t 的 L-N 差流。
+     * 实际游戏里我们用一个固定 FE/t 阈值与持续 tick 数。
+     */
+    private static final long LEAKAGE_TRIP_FE_PER_TICK = 32;
+    private static final int LEAKAGE_HOLD_TICKS = 10;
+
     public static final int ANCHOR_A_L = 0;
     public static final int ANCHOR_A_N = 1;
     public static final int ANCHOR_A_E = 2;
@@ -59,7 +66,9 @@ public class BreakerBlockEntity extends BlockEntity implements WireAnchorOwner {
     private final WireAnchor[] anchors = new WireAnchor[6];
 
     private int overloadTicks;
+    private int leakageTicks;
     private long lastFlow;
+    private long lastLeakage;
 
     public BreakerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state, CableTier tier) {
         super(type, pos, state);
@@ -80,6 +89,7 @@ public class BreakerBlockEntity extends BlockEntity implements WireAnchorOwner {
 
     public CableTier tier() { return tier; }
     public long lastFlow() { return lastFlow; }
+    public long lastLeakage() { return lastLeakage; }
 
     private BreakerState currentState() {
         return getBlockState().getValue(BreakerBlock.STATE);
@@ -128,22 +138,31 @@ public class BreakerBlockEntity extends BlockEntity implements WireAnchorOwner {
         BreakerState state = currentState();
         if (!state.conducts()) {
             lastFlow = 0;
+            lastLeakage = 0;
             return;
         }
 
         long flow = 0;
         long maxPhaseFlow = 0;
+        long flowPerPhase[] = new long[3];
         for (int p = 0; p < 3; p++) {
             int aIdx = p;
             int bIdx = p + 3;
             long phaseFlow = transfer(buffers[aIdx], buffers[bIdx]);
             phaseFlow += transfer(buffers[bIdx], buffers[aIdx]);
+            flowPerPhase[p] = phaseFlow;
             flow += phaseFlow;
             if (phaseFlow > maxPhaseFlow) maxPhaseFlow = phaseFlow;
         }
 
         lastFlow = flow;
+        // RCD：L 流量与 N 流量之差视作漏电流（基尔霍夫电流定律）。
+        // E 上的流量也算入差额——E 平时为 0，被 RCD 节点（其它机器）注入时不为 0。
+        long leakage = Math.abs(flowPerPhase[0] - flowPerPhase[1]);
+        lastLeakage = leakage;
+
         evaluateOverload(level, maxPhaseFlow);
+        evaluateLeakage(level, leakage);
     }
 
     private static long transfer(EnergyStorage src, EnergyStorage dst) {
@@ -173,8 +192,20 @@ public class BreakerBlockEntity extends BlockEntity implements WireAnchorOwner {
         }
     }
 
+    private void evaluateLeakage(Level level, long leakage) {
+        if (leakage > LEAKAGE_TRIP_FE_PER_TICK) {
+            leakageTicks++;
+            if (leakageTicks >= LEAKAGE_HOLD_TICKS) {
+                trip(level, BreakerState.TRIPPED_LEAKAGE);
+            }
+        } else if (leakageTicks > 0) {
+            leakageTicks--;
+        }
+    }
+
     private void trip(Level level, BreakerState reason) {
         overloadTicks = 0;
+        leakageTicks = 0;
         BlockState newState = getBlockState().setValue(BreakerBlock.STATE, reason);
         level.setBlock(getBlockPos(), newState, 3);
         for (EnergyStorage b : buffers) {
@@ -189,6 +220,7 @@ public class BreakerBlockEntity extends BlockEntity implements WireAnchorOwner {
         BlockState newState = getBlockState().setValue(BreakerBlock.STATE, BreakerState.CLOSED);
         level.setBlock(getBlockPos(), newState, 3);
         overloadTicks = 0;
+        leakageTicks = 0;
         setChanged();
     }
 
