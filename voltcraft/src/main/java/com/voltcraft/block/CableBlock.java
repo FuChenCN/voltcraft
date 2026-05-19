@@ -91,25 +91,8 @@ public class CableBlock extends Block implements EntityBlock {
             return true;
         }
 
-        // 2. VoltCraft 自家机器：当 dir 正对其 FACING 或 FACING 反向且等级匹配时连接。
-        //    这些机器的 push 是主动的，不通过 capability 暴露，所以必须显式匹配。
-        Direction face = dir.getOpposite(); // 邻居的哪一面对着我
-        if (neighbor.getBlock() instanceof TransformerBlock tb && tb.outputTier() == this.tier) {
-            Direction decor = neighbor.getValue(TransformerBlock.FACING);
-            // FACING（铭牌）和 FACING.opposite()（输入面）都不接电缆，其余 4 面均输出
-            return face != decor && face != decor.getOpposite();
-        }
-        if (neighbor.getBlock() instanceof BreakerBlock bb && bb.tier() == this.tier) {
-            Direction handleFace = neighbor.getValue(BreakerBlock.FACING);
-            // 电力从 FACING 的两侧水平方向通过（左右），前后是机壳
-            return face == handleFace.getClockWise() || face == handleFace.getCounterClockWise();
-        }
-        if (neighbor.getBlock() instanceof TerminalBlock tb && tb.tier() == this.tier) {
-            Direction machineFace = neighbor.getValue(TerminalBlock.FACING);
-            return face != machineFace; // 端子的非机器面（5 个）都接电缆
-        }
-
-        // 3. 任何提供 IEnergyStorage Capability 的第三方方块（朝向我的反面）
+        // 三相重构后：变压器/空开/端子改用软线 anchor 连接，硬电缆不再贴面接它们。
+        // 仅对外部第三方提供 IEnergyStorage capability 的方块保留贴面连接（兼容其它 mod）。
         if (level instanceof Level lvl) {
             BlockEntity be = lvl.getBlockEntity(neighborPos);
             if (be != null) {
