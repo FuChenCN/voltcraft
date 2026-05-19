@@ -54,16 +54,14 @@ public final class ModBusEvents {
                 }
         );
 
-        // 接线端子双 cap：
-        //   * 机器面 (FACING)：splitHandler——receive→outgoing、extract→incoming（外部机器双向）
-        //   * 其余 5 面：cableSideHandler——只 receive 进 incoming（网络分发）
-        //   incoming 不能被推回网络（只能被机器 extract），所以不会自循环。
+        // 接线端子：仅在机器面（FACING）暴露合流后的单口 IEnergyStorage。
+        // 三相 L/N/E 通过 anchor + 软线接入，不走 capability。
         event.registerBlockEntity(
                 Capabilities.EnergyStorage.BLOCK,
                 ModBlockEntities.TERMINAL.get(),
                 (TerminalBlockEntity be, Direction side) -> {
                     if (side == null) return be.machineHandler();
-                    return side == be.machineFace() ? be.machineHandler() : be.cableHandler();
+                    return side == be.machineFace() ? be.machineHandler() : null;
                 }
         );
     }

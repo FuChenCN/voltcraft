@@ -1,11 +1,10 @@
 package com.voltcraft.blockentity;
 
-import com.voltcraft.block.CableBlock;
 import com.voltcraft.block.TerminalBlock;
 import com.voltcraft.electric.CableTier;
-import com.voltcraft.electric.network.EnergyNetwork;
-import com.voltcraft.electric.network.NetworkManager;
-import com.voltcraft.electric.protection.WiringState;
+import com.voltcraft.electric.Phase;
+import com.voltcraft.electric.wire.WireAnchor;
+import com.voltcraft.electric.wire.WireAnchorOwner;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -14,159 +13,183 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.energy.EnergyStorage;
 import net.neoforged.neoforge.energy.IEnergyStorage;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * 接线端子方块实体。
+ * 接线端子（三相适配器）。
  *
- * 双 buffer 设计避免自循环：
- *   * outgoing：外部机器 receive 进来的，serverTick 把它 push 到电缆网络
- *   * incoming：serverTick 从电缆网络 pull 进来的，外部机器从机器面 extract
+ * 拓扑：
+ *   * FACING（机器面）：朝向外部 mod 机器，暴露单口 IEnergyStorage
+ *   * 其余 5 面：水平 4 面 + 顶面用作 L/N/E 接线柱
  *
- * 机器面对外暴露的 IEnergyStorage 把 receive 路由到 outgoing、extract 路由到 incoming，
- * 玩家视角是单一接线端子，本质是双向桥。
+ * 三个独立 buffer L/N/E，每相 anchor 通过软线接变压器同相。
+ * serverTick：把 L 和 N buffer 中的电合流（取两者较小值再 ×2，保证 L=N），推到机器面外部 mod。
+ *   * 若任一相 buffer 为空 → 不输出（缺相）
+ *   * E 不参与传输
  *
- * 网络侧不暴露 capability —— 否则 distributeTick 会把端子识别为消费者，
- * 把电塞回端子 buffer，再被 serverTick push 回同一网络（自循环、零真实流量）。
- *
- * 短路状态：machineHandler 拒收，电缆网络被打 shortCircuitSource。
+ * 注意：FACING 取代之前的 cable face 语义。机器面就是 FACING；其它 5 面的 anchor 位置硬编码。
  */
-public class TerminalBlockEntity extends BlockEntity {
+public class TerminalBlockEntity extends BlockEntity implements WireAnchorOwner {
 
-    private static final String NBT_OUTGOING = "Outgoing";
-    private static final String NBT_INCOMING = "Incoming";
+    private static final String NBT_BUFFER_L = "BufferL";
+    private static final String NBT_BUFFER_N = "BufferN";
+    private static final String NBT_BUFFER_E = "BufferE";
+
+    public static final int ANCHOR_L = 0;
+    public static final int ANCHOR_N = 1;
+    public static final int ANCHOR_E = 2;
 
     private final CableTier tier;
 
-    /** 机器→网络方向的缓存。serverTick 推空。 */
-    private final EnergyStorage outgoing;
+    private final EnergyStorage bufferL;
+    private final EnergyStorage bufferN;
+    private final EnergyStorage bufferE;
 
-    /** 网络→机器方向的缓存。serverTick 主动从网络拉电填充；外部机器 extract 取走。 */
-    private final EnergyStorage incoming;
+    private final WireAnchor anchorL;
+    private final WireAnchor anchorN;
+    private final WireAnchor anchorE;
 
-    /** 端子总通流量（push + pull），用于 Jade。 */
+    /** 端子总通流量，用于 Jade。 */
     private long lastFlow;
 
     public TerminalBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state, CableTier tier) {
         super(type, pos, state);
         this.tier = tier;
         int rate = tier.ratedTransfer();
-        // 每个方向只缓冲 1 tick 的额定流量，端子是即时桥接，不当储能
-        this.outgoing = new EnergyStorage(rate, rate, rate);
-        this.incoming = new EnergyStorage(rate, rate, rate);
+        // 每相缓存 = 1 tick 额定流量
+        this.bufferL = new EnergyStorage(rate, rate, rate);
+        this.bufferN = new EnergyStorage(rate, rate, rate);
+        this.bufferE = new EnergyStorage(rate, rate, rate);
+        // 三个柱子放在面板上（机器面对侧、左右两个水平面、顶面）
+        // L 顶面右、N 顶面左、E 顶面后（远离 FACING 一侧）
+        this.anchorL = new WireAnchor(ANCHOR_L, Phase.LIVE, new Vec3(0.75, 1.05, 0.5));
+        this.anchorN = new WireAnchor(ANCHOR_N, Phase.NEUTRAL, new Vec3(0.25, 1.05, 0.5));
+        this.anchorE = new WireAnchor(ANCHOR_E, Phase.EARTH, new Vec3(0.5, 1.05, 0.85));
     }
 
     public CableTier tier() { return tier; }
 
     public long lastFlow() { return lastFlow; }
 
-    public WiringState wiring() {
-        return getBlockState().getValue(TerminalBlock.WIRING);
-    }
-
     public Direction machineFace() {
         return getBlockState().getValue(TerminalBlock.FACING);
     }
 
-    public boolean isCableFace(Direction d) {
-        return d != machineFace();
+    @Override
+    @Nullable
+    public WireAnchor anchor(int index) {
+        return switch (index) {
+            case ANCHOR_L -> anchorL;
+            case ANCHOR_N -> anchorN;
+            case ANCHOR_E -> anchorE;
+            default -> null;
+        };
     }
 
-    /** 单一对外句柄；receive→outgoing，extract→incoming。 */
+    @Override
+    public int anchorCount() { return 3; }
+
+    @Override
+    public IEnergyStorage anchorBuffer(int index) {
+        return switch (index) {
+            case ANCHOR_L -> bufferL;
+            case ANCHOR_N -> bufferN;
+            case ANCHOR_E -> bufferE;
+            default -> null;
+        };
+    }
+
+    @Override
+    public Vec3 anchorWorldPos(WireAnchor anchor, BlockPos blockPos) {
+        Direction face = getBlockState().getValue(TerminalBlock.FACING);
+        // FACING 是机器面（朝外）；anchor 设计放在反面或顶面，按 FACING 旋转
+        Vec3 lo = anchor.localOffset();
+        double dx = lo.x - 0.5;
+        double dz = lo.z - 0.5;
+        double rx, rz;
+        switch (face) {
+            case NORTH -> { rx = -dx; rz = -dz; }
+            case SOUTH -> { rx = dx; rz = dz; }
+            case EAST  -> { rx = dz; rz = -dx; }
+            case WEST  -> { rx = -dz; rz = dx; }
+            default    -> { rx = dx; rz = dz; }
+        }
+        return new Vec3(blockPos.getX() + 0.5 + rx, blockPos.getY() + lo.y, blockPos.getZ() + 0.5 + rz);
+    }
+
+    /**
+     * 机器面对外暴露的合流 IEnergyStorage：
+     *   * receiveEnergy = min(L_room, N_room) × 2，accept 后两 buffer 各加一半
+     *   * extractEnergy = min(L_stored, N_stored) × 2，extract 后两 buffer 各减一半
+     *   * 任一相为 0 时 → 该方向流量也为 0（缺相保护）
+     */
     public IEnergyStorage machineHandler() {
-        if (!wiring().conducts()) return BlockedHandler.INSTANCE;
-        return splitHandler;
+        return mergedHandler;
     }
 
-    /** 暴露给电缆侧（5 个非机器面）：仅 receive 到 incoming，绝不 extract。
-     *  这是反向通路：变压器→电缆网络→端子 incoming→外部机器 extract。
-     *  必须暴露此 cap，否则 distributeTick 反压扫描看不到端子，认为下游零空间，整网零流量。 */
-    public IEnergyStorage cableHandler() {
-        if (!wiring().conducts()) return BlockedHandler.INSTANCE;
-        return cableSideHandler;
-    }
-
-    /** 用于 Jade 显示一个综合的 "buffer 占用率"。 */
-    public int bufferStored() { return outgoing.getEnergyStored() + incoming.getEnergyStored(); }
-    public int bufferCapacity() { return outgoing.getMaxEnergyStored() + incoming.getMaxEnergyStored(); }
-
-    private final IEnergyStorage splitHandler = new IEnergyStorage() {
-        @Override public int receiveEnergy(int maxReceive, boolean simulate) {
-            return outgoing.receiveEnergy(maxReceive, simulate);
+    private final IEnergyStorage mergedHandler = new IEnergyStorage() {
+        @Override
+        public int receiveEnergy(int maxReceive, boolean simulate) {
+            int half = maxReceive / 2;
+            int l = bufferL.receiveEnergy(half, true);
+            int n = bufferN.receiveEnergy(half, true);
+            int per = Math.min(l, n);
+            if (per <= 0) return 0;
+            if (!simulate) {
+                bufferL.receiveEnergy(per, false);
+                bufferN.receiveEnergy(per, false);
+            }
+            return per * 2;
         }
-        @Override public int extractEnergy(int maxExtract, boolean simulate) {
-            return incoming.extractEnergy(maxExtract, simulate);
+
+        @Override
+        public int extractEnergy(int maxExtract, boolean simulate) {
+            int half = maxExtract / 2;
+            int l = bufferL.extractEnergy(half, true);
+            int n = bufferN.extractEnergy(half, true);
+            int per = Math.min(l, n);
+            if (per <= 0) return 0;
+            if (!simulate) {
+                bufferL.extractEnergy(per, false);
+                bufferN.extractEnergy(per, false);
+            }
+            return per * 2;
         }
-        @Override public int getEnergyStored() { return outgoing.getEnergyStored() + incoming.getEnergyStored(); }
-        @Override public int getMaxEnergyStored() { return outgoing.getMaxEnergyStored() + incoming.getMaxEnergyStored(); }
+
+        @Override
+        public int getEnergyStored() {
+            return Math.min(bufferL.getEnergyStored(), bufferN.getEnergyStored()) * 2;
+        }
+
+        @Override
+        public int getMaxEnergyStored() {
+            return Math.min(bufferL.getMaxEnergyStored(), bufferN.getMaxEnergyStored()) * 2;
+        }
+
         @Override public boolean canExtract() { return true; }
         @Override public boolean canReceive() { return true; }
     };
 
-    /** 电缆侧 handler：只往 incoming 收电，不让外面抽。绝对不会形成自循环
-     *  ——因为 incoming 的电只能由 splitHandler.extract 流出（即外部机器拿走），
-     *  没有任何代码路径会把 incoming 推回网络。 */
-    private final IEnergyStorage cableSideHandler = new IEnergyStorage() {
-        @Override public int receiveEnergy(int maxReceive, boolean simulate) {
-            return incoming.receiveEnergy(maxReceive, simulate);
-        }
-        @Override public int extractEnergy(int maxExtract, boolean simulate) { return 0; }
-        @Override public int getEnergyStored() { return incoming.getEnergyStored(); }
-        @Override public int getMaxEnergyStored() { return incoming.getMaxEnergyStored(); }
-        @Override public boolean canExtract() { return false; }
-        @Override public boolean canReceive() { return true; }
-    };
+    /** 仅用于 Jade。 */
+    public int bufferStored() {
+        return bufferL.getEnergyStored() + bufferN.getEnergyStored() + bufferE.getEnergyStored();
+    }
+    public int bufferCapacity() {
+        return bufferL.getMaxEnergyStored() + bufferN.getMaxEnergyStored() + bufferE.getMaxEnergyStored();
+    }
 
     public void serverTick() {
         Level level = getLevel();
         if (level == null || level.isClientSide) return;
 
-        WiringState wiring = wiring();
-
-        // 找到电缆侧网络：扫描 5 个非机器面，取第一根同等级电缆
-        EnergyNetwork net = null;
-        for (Direction d : Direction.values()) {
-            if (d == machineFace()) continue;
-            BlockPos cablePos = getBlockPos().relative(d);
-            BlockState cs = level.getBlockState(cablePos);
-            if (cs.getBlock() instanceof CableBlock cb && cb.tier() == tier) {
-                net = NetworkManager.get(level).networkAt(cablePos);
-                if (net != null) break;
-            }
-        }
-
-        // 短路：写标志，清空两个 buffer
-        if (wiring.isShort()) {
-            if (net != null) net.reportShortCircuit(getBlockPos());
-            outgoing.extractEnergy(outgoing.getEnergyStored(), false);
-            incoming.extractEnergy(incoming.getEnergyStored(), false);
-            lastFlow = 0;
-            return;
-        }
-
-        if (net == null) {
-            lastFlow = 0;
-            return;
-        }
-
+        // 主动把合流后的电推给机器面邻居（多数 mod 机器是被动收电）
         long flow = 0;
-
-        // 方向 A：outgoing（外部机器塞的）→ 网络
-        int outAvail = outgoing.getEnergyStored();
-        if (outAvail > 0) {
-            long pushed = net.pushEnergy(level, outAvail, false);
-            if (pushed > 0) {
-                outgoing.extractEnergy((int) Math.min(Integer.MAX_VALUE, pushed), false);
-                flow += pushed;
-            }
-        }
-
-        // 方向 B：incoming → 机器面邻居（外部机器）
-        // 多数耗电方块是被动接收的，不会主动从邻居 extract，所以端子主动 push。
-        int inAvail = incoming.getEnergyStored();
-        if (inAvail > 0) {
+        int avail = mergedHandler.getEnergyStored();
+        if (avail > 0) {
             BlockPos machinePos = getBlockPos().relative(machineFace());
             BlockEntity mbe = level.getBlockEntity(machinePos);
             if (mbe != null) {
@@ -178,39 +201,30 @@ public class TerminalBlockEntity extends BlockEntity {
                         machineFace().getOpposite()
                 );
                 if (sink != null && sink.canReceive()) {
-                    int pushed = sink.receiveEnergy(inAvail, false);
+                    int pushed = sink.receiveEnergy(avail, false);
                     if (pushed > 0) {
-                        incoming.extractEnergy(pushed, false);
-                        flow += pushed;
+                        mergedHandler.extractEnergy(pushed, false);
+                        flow = pushed;
                     }
                 }
             }
         }
-
         lastFlow = flow;
     }
 
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
-        if (tag.contains(NBT_OUTGOING)) outgoing.deserializeNBT(registries, tag.get(NBT_OUTGOING));
-        if (tag.contains(NBT_INCOMING)) incoming.deserializeNBT(registries, tag.get(NBT_INCOMING));
+        if (tag.contains(NBT_BUFFER_L)) bufferL.deserializeNBT(registries, tag.get(NBT_BUFFER_L));
+        if (tag.contains(NBT_BUFFER_N)) bufferN.deserializeNBT(registries, tag.get(NBT_BUFFER_N));
+        if (tag.contains(NBT_BUFFER_E)) bufferE.deserializeNBT(registries, tag.get(NBT_BUFFER_E));
     }
 
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
-        tag.put(NBT_OUTGOING, outgoing.serializeNBT(registries));
-        tag.put(NBT_INCOMING, incoming.serializeNBT(registries));
-    }
-
-    private static final class BlockedHandler implements IEnergyStorage {
-        static final BlockedHandler INSTANCE = new BlockedHandler();
-        @Override public int receiveEnergy(int maxReceive, boolean simulate) { return 0; }
-        @Override public int extractEnergy(int maxExtract, boolean simulate) { return 0; }
-        @Override public int getEnergyStored() { return 0; }
-        @Override public int getMaxEnergyStored() { return 0; }
-        @Override public boolean canExtract() { return false; }
-        @Override public boolean canReceive() { return false; }
+        tag.put(NBT_BUFFER_L, bufferL.serializeNBT(registries));
+        tag.put(NBT_BUFFER_N, bufferN.serializeNBT(registries));
+        tag.put(NBT_BUFFER_E, bufferE.serializeNBT(registries));
     }
 }
