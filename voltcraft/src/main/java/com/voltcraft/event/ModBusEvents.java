@@ -30,13 +30,17 @@ public final class ModBusEvents {
                 (CableBlockEntity be, Direction side) -> new CableEnergyHandler(be)
         );
 
-        // 变压器仅在输入面（FACING 反方向）暴露低压侧 IEnergyStorage
+        // 变压器：FACING 反向（低压输入面）和底面都暴露 inputHandler。
+        // 玩家把发电机贴在底面或背面都能塞电，避免朝向迷糊。
+        // 顶面是 6 柱 anchor 不暴露 cap；FACING（铭牌面）和左右两侧是机壳。
         event.registerBlockEntity(
                 Capabilities.EnergyStorage.BLOCK,
                 ModBlockEntities.TRANSFORMER.get(),
                 (TransformerBlockEntity be, Direction side) -> {
                     if (side == null) return be.inputHandler();
-                    return side == be.inputFace() ? be.inputHandler() : null;
+                    if (side == be.inputFace()) return be.inputHandler();
+                    if (side == Direction.DOWN)  return be.inputHandler();
+                    return null;
                 }
         );
 

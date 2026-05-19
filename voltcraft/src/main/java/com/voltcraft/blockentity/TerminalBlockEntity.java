@@ -122,6 +122,12 @@ public class TerminalBlockEntity extends BlockEntity implements WireAnchorOwner 
         return sum;
     }
 
+    /** 仅用于 Jade 调试：返回某个 anchor 的当前存量。index 越界返 0。 */
+    public int anchorStored(int index) {
+        if (index < 0 || index >= TopAnchorLayout.COUNT) return 0;
+        return buffers[index].getEnergyStored();
+    }
+
     public void serverTick() {
         Level level = getLevel();
         if (level == null || level.isClientSide) return;

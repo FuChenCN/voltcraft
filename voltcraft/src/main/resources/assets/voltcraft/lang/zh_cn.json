@@ -52,6 +52,8 @@
   "voltcraft.jade.network_size": "网络：%s 段电缆",
   "voltcraft.jade.transformer_output": "输出：%s",
   "voltcraft.jade.buffer": "缓存：%s / %s FE",
+  "voltcraft.jade.anchors_in":  "进 L:%s  N:%s  E:%s",
+  "voltcraft.jade.anchors_out": "出 L:%s  N:%s  E:%s",
   "voltcraft.jade.breaker_state": "状态：%s",
   "voltcraft.jade.wiring": "接线：%s",
   "entity.voltcraft.soft_cable": "软线",

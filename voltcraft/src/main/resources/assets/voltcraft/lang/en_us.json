@@ -52,6 +52,8 @@
   "voltcraft.jade.network_size": "Network: %s cables",
   "voltcraft.jade.transformer_output": "Output: %s",
   "voltcraft.jade.buffer": "Buffer: %s / %s FE",
+  "voltcraft.jade.anchors_in":  "IN  L:%s  N:%s  E:%s",
+  "voltcraft.jade.anchors_out": "OUT L:%s  N:%s  E:%s",
   "voltcraft.jade.breaker_state": "State: %s",
   "voltcraft.jade.wiring": "Wiring: %s",
   "entity.voltcraft.soft_cable": "Soft Cable",

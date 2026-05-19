@@ -44,7 +44,11 @@ public class TransformerBlockEntity extends BlockEntity implements WireAnchorOwn
 
     private final CableTier outputTier;
 
-    /** 背面单口 cap 收到的 FE 暂存。每 tick 拆到 in 侧 L/N。 */
+    /**
+     * 背面单口 cap 收到的 FE 暂存。每 tick 拆到 in 侧 L/N。
+     * 内部允许 extract（serverTick 抽空），外部 cap wrapper {@link #inputHandlerCap} 拒绝 extract，
+     * 防止外部 mod 把变压器误判成生产者。
+     */
     private final EnergyStorage inputBuffer;
 
     /** 6 个 anchor 各自的 buffer：与 TopAnchorLayout 索引对应。 */
@@ -56,7 +60,9 @@ public class TransformerBlockEntity extends BlockEntity implements WireAnchorOwn
         super(type, pos, state);
         this.outputTier = outputTier;
         int rate = outputTier.ratedTransfer();
-        this.inputBuffer = new EnergyStorage(rate * 8, rate * 4, 0);
+        // 内部 inputBuffer：容量 = 8 tick；maxReceive = 4 tick；maxExtract = 4 tick
+        // （以前 maxExtract=0 导致 buffer 永不释放，整链路死锁）
+        this.inputBuffer = new EnergyStorage(rate * 8, rate * 4, rate * 4);
         for (int i = 0; i < TopAnchorLayout.COUNT; i++) {
             buffers[i] = new EnergyStorage(rate, rate, rate);
         }
@@ -66,8 +72,33 @@ public class TransformerBlockEntity extends BlockEntity implements WireAnchorOwn
     public CableTier outputTier() { return outputTier; }
     public CableTier tier() { return outputTier; }
 
-    /** 背面 IEnergyStorage：接受外部 mod 单相 FE 输入，进 inputBuffer。 */
-    public IEnergyStorage inputHandler() { return inputBuffer; }
+    /** 仅用于 Jade 调试：返回某个 anchor 的当前存量。index 越界返 0。 */
+    public int anchorStored(int index) {
+        if (index < 0 || index >= TopAnchorLayout.COUNT) return 0;
+        return buffers[index].getEnergyStored();
+    }
+
+    public int anchorCapacity(int index) {
+        if (index < 0 || index >= TopAnchorLayout.COUNT) return 0;
+        return buffers[index].getMaxEnergyStored();
+    }
+
+    /**
+     * 背面 IEnergyStorage：只允许外部 mod receive，不让 extract。
+     * 这是 wrapper，内部 inputBuffer 仍然能被 serverTick 抽空。
+     */
+    public IEnergyStorage inputHandler() { return inputHandlerCap; }
+
+    private final IEnergyStorage inputHandlerCap = new IEnergyStorage() {
+        @Override public int receiveEnergy(int maxReceive, boolean simulate) {
+            return inputBuffer.receiveEnergy(maxReceive, simulate);
+        }
+        @Override public int extractEnergy(int maxExtract, boolean simulate) { return 0; }
+        @Override public int getEnergyStored() { return inputBuffer.getEnergyStored(); }
+        @Override public int getMaxEnergyStored() { return inputBuffer.getMaxEnergyStored(); }
+        @Override public boolean canExtract() { return false; }
+        @Override public boolean canReceive() { return true; }
+    };
 
     @Override
     @Nullable
