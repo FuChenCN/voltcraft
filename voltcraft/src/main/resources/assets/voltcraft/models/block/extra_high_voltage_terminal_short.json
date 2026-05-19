@@ -1,7 +1,7 @@
 {
   "parent": "voltcraft:block/orientable_back",
   "textures": {
-    "top":    "voltcraft:block/terminal_top",
+    "top":    "voltcraft:block/extra_high_voltage_machine_top",
     "bottom": "voltcraft:block/terminal_side",
     "side":   "voltcraft:block/terminal_side",
     "front":  "voltcraft:block/extra_high_voltage_terminal_short",
