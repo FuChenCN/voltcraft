@@ -23,16 +23,16 @@ import org.jetbrains.annotations.Nullable;
 /**
  * 软线 Entity。
  *
- * 两端绑定到机器 BlockEntity 上的 {@link WireAnchor}，自身不储能、不暴露 Capability，
- * 仅作为「跨网传输代理」：在 {@link #tick()} 中从一端 anchor 所在的 EnergyNetwork
- * 拉电、推到另一端 anchor 所在的 EnergyNetwork。
+ * 两端绑定到机器 BlockEntity 上的 {@link WireAnchor}，自身不储能、不暴露 Capability。
+ * tick 时从 OUTPUT 端 anchor 的 buffer 抽电，推到 INPUT 端 anchor 的 buffer。
  *
- * 持久化：两端 {@link WireAnchorRef}、phase。
- * 客户端同步：两端世界坐标（给 renderer 画贝塞尔曲线用），phase（决定颜色）。
+ * 持久化：两端 {@link WireAnchorRef}、phase、tier。
+ * 客户端同步：两端 owner BlockPos + anchorIndex、phase（决定颜色）。
  *
  * 失效条件（discard 自身）：
  *   * 任一端 anchor 解析不到（区块卸载除外，那是 owner BE 临时为空）
  *   * 任一端 anchor 已被其它 entity 占用且不是自己
+ *   * phase / tier / direction 不一致
  *   * 玩家直接攻击（hurt 钩子）
  */
 public class SoftCableEntity extends Entity {

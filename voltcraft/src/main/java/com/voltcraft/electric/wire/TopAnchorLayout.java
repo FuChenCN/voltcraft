@@ -36,12 +36,13 @@ public final class TopAnchorLayout {
 
     public static final int COUNT = 6;
 
-    private static final double Y = 1.05;
+    private static final double Y = 1.125;  // 柱子顶面 = 主方块 y=1 + 凸起 2/16
     private static final double X_IN = 0.25;
     private static final double X_OUT = 0.75;
-    private static final double Z_L = 0.20;
-    private static final double Z_N = 0.50;
-    private static final double Z_E = 0.80;
+    // Z 与贴图 v 对齐：贴图 v 大（下方）= 世界 +Z（南/近）= L 红色（最显眼）
+    private static final double Z_L = 0.80;  // 贴图 v=12-13 (近)
+    private static final double Z_N = 0.50;  // 贴图 v=7-8  (中)
+    private static final double Z_E = 0.20;  // 贴图 v=2-3  (远)
 
     private static final Vec3 LOCAL_L_IN  = new Vec3(X_IN,  Y, Z_L);
     private static final Vec3 LOCAL_N_IN  = new Vec3(X_IN,  Y, Z_N);

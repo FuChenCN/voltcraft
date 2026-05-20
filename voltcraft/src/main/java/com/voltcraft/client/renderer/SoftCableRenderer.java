@@ -15,15 +15,18 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 /**
- * 软线渲染器：两端 anchor 间画一条贝塞尔曲线，颜色按相位。
+ * 软线渲染器：两端 anchor 间画一条贝塞尔曲线，渲染为 4 棱柱（不是十字平面，避免侧视扁平）。
  *
- * 控制点 = 两端中点向下偏移（重力下垂效果），偏移量正比于线长。
- * 段数随相机距离 LOD：近 16 段、远 8 段。
+ * 算法：
+ *   1. 二次贝塞尔曲线，控制点在两端中点正下方（sag = chord × SAG_FACTOR）
+ *   2. 沿弦构造正交 frame {n1, n2}：n1 = 水平横向，n2 = 弦平面内的垂直方向
+ *   3. 每个曲线分段画一个 4 棱柱节，4 个矩形面环绕一周
  */
 public class SoftCableRenderer extends EntityRenderer<SoftCableEntity> {
 
-    /** 贴图任意选一个像素纯色的，颜色靠 vertex color。这里复用基岩纹理。 */
-    private static final ResourceLocation BLANK = ResourceLocation.withDefaultNamespace("textures/block/white_concrete.png");
+    /** 单像素纯白贴图，颜色靠 vertex color。 */
+    private static final ResourceLocation BLANK =
+            ResourceLocation.withDefaultNamespace("textures/block/white_concrete.png");
 
     private static final int SEGMENTS_NEAR = 16;
     private static final int SEGMENTS_FAR = 8;
@@ -32,7 +35,8 @@ public class SoftCableRenderer extends EntityRenderer<SoftCableEntity> {
     /** 下垂系数：中点 Y 偏移 = 弦长 × SAG_FACTOR。 */
     private static final double SAG_FACTOR = 0.18;
 
-    private static final float WIRE_THICKNESS = 0.04f;
+    /** 软线半径（4 棱柱半边长）。直径 ≈ 0.08 个方块 ≈ 1.3 像素，接近 IE 风格的中粗线。 */
+    private static final float WIRE_RADIUS = 0.04f;
 
     public SoftCableRenderer(EntityRendererProvider.Context ctx) {
         super(ctx);
@@ -52,18 +56,36 @@ public class SoftCableRenderer extends EntityRenderer<SoftCableEntity> {
 
         // 转到 entity 局部坐标系（render 已经把 pose 平移到 entity 位置）
         Vec3 entityPos = entity.position();
-        Vector3f la = new Vector3f((float)(a.x - entityPos.x), (float)(a.y - entityPos.y), (float)(a.z - entityPos.z));
-        Vector3f lb = new Vector3f((float)(b.x - entityPos.x), (float)(b.y - entityPos.y), (float)(b.z - entityPos.z));
+        Vector3f la = new Vector3f(
+                (float)(a.x - entityPos.x), (float)(a.y - entityPos.y), (float)(a.z - entityPos.z));
+        Vector3f lb = new Vector3f(
+                (float)(b.x - entityPos.x), (float)(b.y - entityPos.y), (float)(b.z - entityPos.z));
 
-        // 控制点在 ab 中点正下方
         double chord = a.distanceTo(b);
         float sag = (float)(chord * SAG_FACTOR);
-        Vector3f ctrl = new Vector3f((la.x + lb.x) * 0.5f,
-                                     (la.y + lb.y) * 0.5f - sag,
-                                     (la.z + lb.z) * 0.5f);
+        Vector3f ctrl = new Vector3f(
+                (la.x + lb.x) * 0.5f,
+                (la.y + lb.y) * 0.5f - sag,
+                (la.z + lb.z) * 0.5f);
 
         int segments = chord > FAR_DIST ? SEGMENTS_FAR : SEGMENTS_NEAR;
         int[] color = phaseColor(entity.phase());
+
+        // 沿弦构造正交 frame {n1, n2}（整根线共用，避免段间扭转）
+        Vector3f chordDir = new Vector3f(lb).sub(la);
+        if (chordDir.lengthSquared() < 1e-6f) return;
+        chordDir.normalize();
+        Vector3f up = new Vector3f(0f, 1f, 0f);
+        Vector3f n1 = new Vector3f();
+        chordDir.cross(up, n1);
+        if (n1.lengthSquared() < 1e-6f) {
+            // 弦近乎垂直，退化 fallback
+            n1.set(1f, 0f, 0f);
+        }
+        n1.normalize().mul(WIRE_RADIUS);
+        Vector3f n2 = new Vector3f();
+        n1.cross(chordDir, n2);
+        n2.normalize().mul(WIRE_RADIUS);
 
         VertexConsumer vc = buffers.getBuffer(RenderType.entityCutoutNoCull(BLANK));
         Matrix4f matrix = pose.last().pose();
@@ -72,7 +94,7 @@ public class SoftCableRenderer extends EntityRenderer<SoftCableEntity> {
         for (int i = 1; i <= segments; i++) {
             float t = (float) i / segments;
             Vector3f cur = bezier(la, ctrl, lb, t);
-            drawSegment(vc, matrix, prev, cur, color, packedLight);
+            drawSegment(vc, matrix, prev, cur, n1, n2, color, packedLight);
             prev = cur;
         }
     }
@@ -87,35 +109,50 @@ public class SoftCableRenderer extends EntityRenderer<SoftCableEntity> {
         );
     }
 
-    /** 画一个面向相机的"丝带"段。简化做法：画两个垂直交叉的四边形让任意视角都看得见。 */
+    /** 画一段 4 棱柱：a→b 之间，截面是 (±n1) × (±n2) 矩形。 */
     private static void drawSegment(VertexConsumer vc, Matrix4f m,
-                                    Vector3f a, Vector3f b, int[] rgb, int light) {
+                                    Vector3f a, Vector3f b,
+                                    Vector3f n1, Vector3f n2,
+                                    int[] rgb, int light) {
         float r = rgb[0] / 255f, g = rgb[1] / 255f, bl = rgb[2] / 255f;
-        float t = WIRE_THICKNESS;
-        // 沿 X-Y 平面拉宽
-        quad(vc, m, a.x - t, a.y, a.z, a.x + t, a.y, a.z,
-                    b.x + t, b.y, b.z, b.x - t, b.y, b.z, r, g, bl, light);
-        // 沿 Z-Y 平面再拉宽（十字断面）
-        quad(vc, m, a.x, a.y, a.z - t, a.x, a.y, a.z + t,
-                    b.x, b.y, b.z + t, b.x, b.y, b.z - t, r, g, bl, light);
+
+        // 8 个角点：a/b 各 4 个（+n1+n2、+n1-n2、-n1-n2、-n1+n2）
+        Vector3f a1 = add(a,  n1,  n2);  // a, +n1+n2
+        Vector3f a2 = add(a,  n1, neg(n2));  // a, +n1-n2
+        Vector3f a3 = add(a, neg(n1), neg(n2));  // a, -n1-n2
+        Vector3f a4 = add(a, neg(n1),  n2);  // a, -n1+n2
+        Vector3f b1 = add(b,  n1,  n2);
+        Vector3f b2 = add(b,  n1, neg(n2));
+        Vector3f b3 = add(b, neg(n1), neg(n2));
+        Vector3f b4 = add(b, neg(n1),  n2);
+
+        // 4 个侧面（顺时针绕一周）：+n1, -n2, -n1, +n2
+        quad(vc, m, a1, b1, b2, a2, r, g, bl, light);  // +n1 面
+        quad(vc, m, a2, b2, b3, a3, r, g, bl, light);  // -n2 面
+        quad(vc, m, a3, b3, b4, a4, r, g, bl, light);  // -n1 面
+        quad(vc, m, a4, b4, b1, a1, r, g, bl, light);  // +n2 面
+    }
+
+    private static Vector3f add(Vector3f base, Vector3f d1, Vector3f d2) {
+        return new Vector3f(base).add(d1).add(d2);
+    }
+
+    private static Vector3f neg(Vector3f v) {
+        return new Vector3f(-v.x, -v.y, -v.z);
     }
 
     private static void quad(VertexConsumer vc, Matrix4f m,
-                             float x1, float y1, float z1,
-                             float x2, float y2, float z2,
-                             float x3, float y3, float z3,
-                             float x4, float y4, float z4,
+                             Vector3f p1, Vector3f p2, Vector3f p3, Vector3f p4,
                              float r, float g, float b, int light) {
-        vert(vc, m, x1, y1, z1, r, g, b, light);
-        vert(vc, m, x2, y2, z2, r, g, b, light);
-        vert(vc, m, x3, y3, z3, r, g, b, light);
-        vert(vc, m, x4, y4, z4, r, g, b, light);
+        vert(vc, m, p1, r, g, b, light);
+        vert(vc, m, p2, r, g, b, light);
+        vert(vc, m, p3, r, g, b, light);
+        vert(vc, m, p4, r, g, b, light);
     }
 
     private static void vert(VertexConsumer vc, Matrix4f m,
-                             float x, float y, float z,
-                             float r, float g, float b, int light) {
-        vc.addVertex(m, x, y, z)
+                             Vector3f p, float r, float g, float b, int light) {
+        vc.addVertex(m, p.x, p.y, p.z)
           .setColor(r, g, b, 1.0f)
           .setUv(0f, 0f)
           .setOverlay(OverlayTexture.NO_OVERLAY)

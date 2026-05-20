@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "voltcraft:item/low_voltage_soft_cable"
+  }
+}

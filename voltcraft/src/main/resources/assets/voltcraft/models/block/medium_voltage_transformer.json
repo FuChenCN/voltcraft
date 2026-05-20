@@ -1,5 +1,5 @@
 {
-  "parent": "voltcraft:block/orientable_back",
+  "parent": "voltcraft:block/anchored_top",
   "textures": {
     "top":    "voltcraft:block/medium_voltage_machine_top",
     "bottom": "voltcraft:block/medium_voltage_transformer_side",

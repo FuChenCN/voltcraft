@@ -17,11 +17,8 @@ public final class ModCreativeTabs {
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> MAIN =
             TABS.register("main", () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup.voltcraft"))
-                    .icon(() -> ModBlocks.CABLES.get(CableTier.LOW).get().asItem().getDefaultInstance())
+                    .icon(() -> ModItems.SOFT_CABLES.get(CableTier.LOW).get().getDefaultInstance())
                     .displayItems((parameters, output) -> {
-                        for (CableTier tier : CableTier.values()) {
-                            output.accept(ModBlocks.CABLES.get(tier).get());
-                        }
                         for (CableTier tier : CableTier.values()) {
                             output.accept(ModBlocks.TRANSFORMERS.get(tier).get());
                         }

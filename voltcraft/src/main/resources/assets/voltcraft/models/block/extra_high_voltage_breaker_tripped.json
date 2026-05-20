@@ -1,5 +1,5 @@
 {
-  "parent": "voltcraft:block/orientable_back",
+  "parent": "voltcraft:block/anchored_top",
   "textures": {
     "top":    "voltcraft:block/extra_high_voltage_machine_top",
     "bottom": "voltcraft:block/breaker_side",
