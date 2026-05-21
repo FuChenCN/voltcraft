@@ -6,6 +6,7 @@ import com.voltcraft.block.CableBlock;
 import com.voltcraft.block.TerminalBlock;
 import com.voltcraft.block.TransformerBlock;
 import com.voltcraft.electric.CableTier;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
@@ -29,6 +30,29 @@ public final class ModBlocks {
     public static final Map<CableTier, DeferredBlock<TransformerBlock>> TRANSFORMERS = createTransformers();
     public static final Map<CableTier, DeferredBlock<BreakerBlock>> BREAKERS = createBreakers();
     public static final Map<CableTier, DeferredBlock<TerminalBlock>> TERMINALS = createTerminals();
+
+    // Hemimorphite ore blocks
+    public static final DeferredBlock<Block> HEMIMORPHITE_ORE = registerWithItem(
+            "hemimorphite_ore",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.STONE)
+                    .strength(3.0f, 3.0f)
+                    .sound(SoundType.STONE)
+                    .requiresCorrectToolForDrops()
+                    .destroyTime(1.5f)
+                    .isRedstoneConductor((state, level, pos) -> false))
+    );
+
+    public static final DeferredBlock<Block> DEEPSLATE_HEMIMORPHITE_ORE = registerWithItem(
+            "deepslate_hemimorphite_ore",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.DEEPSLATE)
+                    .strength(4.5f, 3.0f)
+                    .sound(SoundType.DEEPSLATE)
+                    .requiresCorrectToolForDrops()
+                    .destroyTime(2.25f)
+                    .isRedstoneConductor((state, level, pos) -> false))
+    );
 
     private static Map<CableTier, DeferredBlock<CableBlock>> createCables() {
         EnumMap<CableTier, DeferredBlock<CableBlock>> map = new EnumMap<>(CableTier.class);

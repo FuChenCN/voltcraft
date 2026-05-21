@@ -1,5 +1,9 @@
 {
   "itemGroup.voltcraft": "VoltCraft",
+  "block.voltcraft.hemimorphite_ore": "Hemimorphite Ore",
+  "block.voltcraft.deepslate_hemimorphite_ore": "Deepslate Hemimorphite Ore",
+  "item.voltcraft.raw_hemimorphite": "Raw Hemimorphite",
+  "item.voltcraft.hemimorphite": "Hemimorphite",
   "block.voltcraft.low_voltage_cable": "Low Voltage Cable (220V)",
   "block.voltcraft.medium_voltage_cable": "Medium Voltage Cable (10kV)",
   "block.voltcraft.high_voltage_cable": "High Voltage Cable (35kV)",
