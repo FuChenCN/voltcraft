@@ -119,7 +119,7 @@ def make_fuse():
 # === 异极矿 (Hemimorphite) - 锌 ===
 create_png(f'{TEXTURE_DIR}/block/hemimorphite_ore.png', make_ore(160, 170, 180, 128, 128, 128))
 create_png(f'{TEXTURE_DIR}/block/deepslate_hemimorphite_ore.png', make_ore(150, 160, 170, 100, 100, 100))
-create_png(f'{TEXTURE_DIR}/item/hemimorphite.png', make_item_nugget(170, 180, 190))
+create_png(f'{TEXTURE_DIR}/item/zinc_ingot.png', make_ingot(170, 180, 190))
 create_png(f'{TEXTURE_DIR}/item/raw_hemimorphite.png', make_item_nugget(150, 160, 170))
 
 # === 蔷薇灰石 (Rhodonite) - 锰 ===
