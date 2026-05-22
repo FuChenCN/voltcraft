@@ -45,6 +45,10 @@ public final class ModCreativeTabs {
                         output.accept(ModBlocks.DEEPSLATE_HEMIMORPHITE_ORE.get());
                         output.accept(ModItems.RAW_HEMIMORPHITE.get());
                         output.accept(ModItems.HEMIMORPHITE.get());
+                        output.accept(ModBlocks.RHODONITE_ORE.get());
+                        output.accept(ModBlocks.DEEPSLATE_RHODONITE_ORE.get());
+                        output.accept(ModItems.RAW_MANGANESE.get());
+                        output.accept(ModItems.MANGANESE_INGOT.get());
                     })
                     .build());
 

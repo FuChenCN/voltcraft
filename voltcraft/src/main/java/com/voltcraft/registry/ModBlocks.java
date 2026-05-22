@@ -52,6 +52,27 @@ public final class ModBlocks {
                     .requiresCorrectToolForDrops())
     );
 
+    // Rhodonite ore blocks (manganese ore)
+    public static final DeferredBlock<Block> RHODONITE_ORE = registerWithItem(
+            "rhodonite_ore",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.STONE)
+                    .destroyTime(3.0f)
+                    .explosionResistance(6.0f)
+                    .sound(SoundType.STONE)
+                    .requiresCorrectToolForDrops())
+    );
+
+    public static final DeferredBlock<Block> DEEPSLATE_RHODONITE_ORE = registerWithItem(
+            "deepslate_rhodonite_ore",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.DEEPSLATE)
+                    .destroyTime(4.5f)
+                    .explosionResistance(6.0f)
+                    .sound(SoundType.DEEPSLATE)
+                    .requiresCorrectToolForDrops())
+    );
+
     private static Map<CableTier, DeferredBlock<CableBlock>> createCables() {
         EnumMap<CableTier, DeferredBlock<CableBlock>> map = new EnumMap<>(CableTier.class);
         for (CableTier tier : CableTier.values()) {

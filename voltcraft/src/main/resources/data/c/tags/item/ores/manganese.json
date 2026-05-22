@@ -1,8 +1,6 @@
 {
   "replace": false,
   "values": [
-    "voltcraft:hemimorphite_ore",
-    "voltcraft:deepslate_hemimorphite_ore",
     "voltcraft:rhodonite_ore",
     "voltcraft:deepslate_rhodonite_ore"
   ]

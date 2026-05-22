@@ -22,6 +22,17 @@ public final class ModItems {
             () -> new Item(new Item.Properties())
     );
 
+    // Manganese items (from rhodonite ore)
+    public static final DeferredItem<Item> RAW_MANGANESE = ITEMS.register(
+            "raw_manganese",
+            () -> new Item(new Item.Properties())
+    );
+
+    public static final DeferredItem<Item> MANGANESE_INGOT = ITEMS.register(
+            "manganese_ingot",
+            () -> new Item(new Item.Properties())
+    );
+
     // Parts items
     public static final DeferredItem<Item> SPRING = ITEMS.register(
             "spring",
