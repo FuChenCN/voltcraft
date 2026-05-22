@@ -33,27 +33,25 @@ public final class ModBlocks {
     public static final Map<CableTier, DeferredBlock<ThreePhaseBreakerBlock>> THREE_PHASE_BREAKERS = createThreePhaseBreakers();
     public static final Map<CableTier, DeferredBlock<TerminalBlock>> TERMINALS = createTerminals();
 
-    // Hemimorphite ore blocks
+    // Hemimorphite ore blocks - 使用NeoForge推荐的矿石设置
     public static final DeferredBlock<Block> HEMIMORPHITE_ORE = registerWithItem(
             "hemimorphite_ore",
             () -> new Block(BlockBehaviour.Properties.of()
                     .mapColor(MapColor.STONE)
-                    .strength(3.0f, 3.0f)
+                    .destroyTime(3.0f)
+                    .explosionResistance(6.0f)
                     .sound(SoundType.STONE)
-                    .requiresCorrectToolForDrops()
-                    .destroyTime(1.5f)
-                    .isRedstoneConductor((state, level, pos) -> false))
+                    .requiresCorrectToolForDrops())
     );
 
     public static final DeferredBlock<Block> DEEPSLATE_HEMIMORPHITE_ORE = registerWithItem(
             "deepslate_hemimorphite_ore",
             () -> new Block(BlockBehaviour.Properties.of()
                     .mapColor(MapColor.DEEPSLATE)
-                    .strength(4.5f, 3.0f)
+                    .destroyTime(4.5f)
+                    .explosionResistance(6.0f)
                     .sound(SoundType.DEEPSLATE)
-                    .requiresCorrectToolForDrops()
-                    .destroyTime(2.25f)
-                    .isRedstoneConductor((state, level, pos) -> false))
+                    .requiresCorrectToolForDrops())
     );
 
     private static Map<CableTier, DeferredBlock<CableBlock>> createCables() {

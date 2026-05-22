@@ -1,5 +1,7 @@
 {
   "itemGroup.voltcraft": "伏特工艺",
+  "itemGroup.voltcraft.equipment": "伏特工艺 - 设备",
+  "itemGroup.voltcraft.minerals": "伏特工艺 - 矿物",
   "block.voltcraft.hemimorphite_ore": "异极矿矿石",
   "block.voltcraft.deepslate_hemimorphite_ore": "深层异极矿矿石",
   "item.voltcraft.raw_hemimorphite": "粗异极矿",

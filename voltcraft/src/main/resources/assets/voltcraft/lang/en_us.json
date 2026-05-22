@@ -1,5 +1,7 @@
 {
   "itemGroup.voltcraft": "VoltCraft",
+  "itemGroup.voltcraft.equipment": "VoltCraft - Equipment",
+  "itemGroup.voltcraft.minerals": "VoltCraft - Minerals",
   "block.voltcraft.hemimorphite_ore": "Hemimorphite Ore",
   "block.voltcraft.deepslate_hemimorphite_ore": "Deepslate Hemimorphite Ore",
   "item.voltcraft.raw_hemimorphite": "Raw Hemimorphite",
