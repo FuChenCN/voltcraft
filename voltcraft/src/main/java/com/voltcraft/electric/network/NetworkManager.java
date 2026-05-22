@@ -201,15 +201,6 @@ public final class NetworkManager {
         return s.getBlock() instanceof CableBlock cb && cb.tier() == tier;
     }
 
-    /** 仅供调试/测试。 */
-    public int trackedCableCount() {
-        return byPos.size();
-    }
-
-    public int distinctNetworkCount() {
-        return new HashSet<>(byPos.values()).size();
-    }
-
     /**
      * 服务端 tick 末调用：让所有网络分发本 tick 的 pending 输入。
      * 通过 IdentityHashMap 去重以保证同一网络只 tick 一次。

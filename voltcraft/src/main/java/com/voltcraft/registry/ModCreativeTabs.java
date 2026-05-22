@@ -9,9 +9,6 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
-import static com.voltcraft.registry.ModItems.HEMIMORPHITE;
-import static com.voltcraft.registry.ModItems.RAW_HEMIMORPHITE;
-
 public final class ModCreativeTabs {
 
     public static final DeferredRegister<CreativeModeTab> TABS =
@@ -30,6 +27,9 @@ public final class ModCreativeTabs {
                         }
                         for (CableTier tier : CableTier.values()) {
                             output.accept(ModBlocks.BREAKERS.get(tier).get());
+                        }
+                        for (CableTier tier : CableTier.values()) {
+                            output.accept(ModBlocks.THREE_PHASE_BREAKERS.get(tier).get());
                         }
                         for (CableTier tier : CableTier.values()) {
                             output.accept(ModBlocks.TERMINALS.get(tier).get());

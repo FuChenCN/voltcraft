@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "facing=north,state=closed":           { "model": "voltcraft:block/extra_high_voltage_three_phase_breaker_closed" },
+    "facing=south,state=closed":           { "model": "voltcraft:block/extra_high_voltage_three_phase_breaker_closed", "y": 180 },
+    "facing=east,state=closed":            { "model": "voltcraft:block/extra_high_voltage_three_phase_breaker_closed", "y": 90 },
+    "facing=west,state=closed":            { "model": "voltcraft:block/extra_high_voltage_three_phase_breaker_closed", "y": 270 },
+    "facing=north,state=tripped_overload": { "model": "voltcraft:block/extra_high_voltage_three_phase_breaker_tripped" },
+    "facing=south,state=tripped_overload": { "model": "voltcraft:block/extra_high_voltage_three_phase_breaker_tripped", "y": 180 },
+    "facing=east,state=tripped_overload":  { "model": "voltcraft:block/extra_high_voltage_three_phase_breaker_tripped", "y": 90 },
+    "facing=west,state=tripped_overload":  { "model": "voltcraft:block/extra_high_voltage_three_phase_breaker_tripped", "y": 270 },
+    "facing=north,state=tripped_short":    { "model": "voltcraft:block/extra_high_voltage_three_phase_breaker_tripped" },
+    "facing=south,state=tripped_short":    { "model": "voltcraft:block/extra_high_voltage_three_phase_breaker_tripped", "y": 180 },
+    "facing=east,state=tripped_short":     { "model": "voltcraft:block/extra_high_voltage_three_phase_breaker_tripped", "y": 90 },
+    "facing=west,state=tripped_short":     { "model": "voltcraft:block/extra_high_voltage_three_phase_breaker_tripped", "y": 270 },
+    "facing=north,state=tripped_leakage":  { "model": "voltcraft:block/extra_high_voltage_three_phase_breaker_tripped" },
+    "facing=south,state=tripped_leakage":  { "model": "voltcraft:block/extra_high_voltage_three_phase_breaker_tripped", "y": 180 },
+    "facing=east,state=tripped_leakage":   { "model": "voltcraft:block/extra_high_voltage_three_phase_breaker_tripped", "y": 90 },
+    "facing=west,state=tripped_leakage":   { "model": "voltcraft:block/extra_high_voltage_three_phase_breaker_tripped", "y": 270 }
+  }
+}

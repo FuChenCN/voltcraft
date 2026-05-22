@@ -1,0 +1,24 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "top": "voltcraft:block/three_phase_breaker_top",
+    "front": "voltcraft:block/high_voltage_breaker_closed",
+    "side": "voltcraft:block/breaker_side",
+    "input": "voltcraft:block/three_phase_breaker_input",
+    "output": "voltcraft:block/three_phase_breaker_output"
+  },
+  "elements": [
+    {
+      "from": [0, 0, 0],
+      "to": [16, 16, 16],
+      "faces": {
+        "north": {"texture": "#front", "cullface": "north"},
+        "east": {"texture": "#output", "cullface": "east"},
+        "south": {"texture": "#side", "cullface": "south"},
+        "west": {"texture": "#input", "cullface": "west"},
+        "up": {"texture": "#top", "cullface": "up"},
+        "down": {"texture": "#side", "cullface": "down"}
+      }
+    }
+  ]
+}

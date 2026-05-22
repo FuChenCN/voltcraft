@@ -4,10 +4,12 @@ import com.voltcraft.VoltCraft;
 import com.voltcraft.block.BreakerBlock;
 import com.voltcraft.block.CableBlock;
 import com.voltcraft.block.TerminalBlock;
+import com.voltcraft.block.ThreePhaseBreakerBlock;
 import com.voltcraft.block.TransformerBlock;
 import com.voltcraft.blockentity.BreakerBlockEntity;
 import com.voltcraft.blockentity.CableBlockEntity;
 import com.voltcraft.blockentity.TerminalBlockEntity;
+import com.voltcraft.blockentity.ThreePhaseBreakerBlockEntity;
 import com.voltcraft.blockentity.TransformerBlockEntity;
 import com.voltcraft.electric.CableTier;
 import net.minecraft.core.registries.Registries;
@@ -63,6 +65,21 @@ public final class ModBlockEntities {
                             BreakerBlock block = (BreakerBlock) state.getBlock();
                             return new BreakerBlockEntity(
                                     ModBlockEntities.BREAKER.get(), pos, state, block.tier());
+                        },
+                        breakerBlocks
+                ).build(null);
+            });
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ThreePhaseBreakerBlockEntity>> THREE_PHASE_BREAKER =
+            BLOCK_ENTITIES.register("three_phase_breaker", () -> {
+                Block[] breakerBlocks = Arrays.stream(CableTier.values())
+                        .map(tier -> ModBlocks.THREE_PHASE_BREAKERS.get(tier).get())
+                        .toArray(Block[]::new);
+                return BlockEntityType.Builder.of(
+                        (pos, state) -> {
+                            ThreePhaseBreakerBlock block = (ThreePhaseBreakerBlock) state.getBlock();
+                            return new ThreePhaseBreakerBlockEntity(
+                                    ModBlockEntities.THREE_PHASE_BREAKER.get(), pos, state, block.tier());
                         },
                         breakerBlocks
                 ).build(null);

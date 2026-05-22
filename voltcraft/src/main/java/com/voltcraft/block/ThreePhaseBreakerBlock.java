@@ -1,6 +1,6 @@
 package com.voltcraft.block;
 
-import com.voltcraft.blockentity.BreakerBlockEntity;
+import com.voltcraft.blockentity.ThreePhaseBreakerBlockEntity;
 import com.voltcraft.electric.CableTier;
 import com.voltcraft.electric.protection.BreakerState;
 import com.voltcraft.registry.ModBlockEntities;
@@ -28,14 +28,19 @@ import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * 空气开关：串联在电缆上，过载/短路时跳闸。
+ * 三相空气开关：支持火线、零线、地线三线系统。
+ *
+ * 布局（视角正对方块）：
+ * - 正面：开关（玩家右键交互）
+ * - 左面：输入端（零线、火线、地线三个端口）
+ * - 右面：输出端（零线、火线、地线三个端口）
  *
  * 拓扑：本方块本身不是电缆；FACING 方向和反方向各连一根电缆，
  * 把两侧网络桥接起来。CLOSED 时桥接，TRIPPED 时切断。
  *
  * 玩家右键已跳闸的空开 → 合闸恢复。
  */
-public class BreakerBlock extends Block implements EntityBlock {
+public class ThreePhaseBreakerBlock extends Block implements EntityBlock {
 
     public static final EnumProperty<BreakerState> STATE = EnumProperty.create("state", BreakerState.class);
     public static final net.minecraft.world.level.block.state.properties.DirectionProperty FACING =
@@ -43,7 +48,7 @@ public class BreakerBlock extends Block implements EntityBlock {
 
     private final CableTier tier;
 
-    public BreakerBlock(CableTier tier, BlockBehaviour.Properties properties) {
+    public ThreePhaseBreakerBlock(CableTier tier, BlockBehaviour.Properties properties) {
         super(properties);
         this.tier = tier;
         registerDefaultState(stateDefinition.any()
@@ -68,32 +73,18 @@ public class BreakerBlock extends Block implements EntityBlock {
                 .setValue(STATE, BreakerState.CLOSED);
     }
 
-    /**
-     * 根据正面方向计算输入面（左边）。
-     */
-    public static Direction getInputFace(Direction facing) {
-        return facing.getCounterClockWise();
-    }
-
-    /**
-     * 根据正面方向计算输出面（右边）。
-     */
-    public static Direction getOutputFace(Direction facing) {
-        return facing.getClockWise();
-    }
-
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new BreakerBlockEntity(ModBlockEntities.BREAKER.get(), pos, state, tier);
+        return new ThreePhaseBreakerBlockEntity(ModBlockEntities.THREE_PHASE_BREAKER.get(), pos, state, tier);
     }
 
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         if (level.isClientSide) return null;
-        return type == ModBlockEntities.BREAKER.get()
-                ? (lvl, pos, st, be) -> ((BreakerBlockEntity) be).serverTick()
+        return type == ModBlockEntities.THREE_PHASE_BREAKER.get()
+                ? (lvl, pos, st, be) -> ((ThreePhaseBreakerBlockEntity) be).serverTick()
                 : null;
     }
 
@@ -101,7 +92,7 @@ public class BreakerBlock extends Block implements EntityBlock {
     @SuppressWarnings("deprecation")
     public InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (level.isClientSide) return InteractionResult.SUCCESS;
-        if (level.getBlockEntity(pos) instanceof BreakerBlockEntity be) {
+        if (level.getBlockEntity(pos) instanceof ThreePhaseBreakerBlockEntity be) {
             BreakerState cur = state.getValue(STATE);
             if (cur.isTripped()) {
                 be.reset();

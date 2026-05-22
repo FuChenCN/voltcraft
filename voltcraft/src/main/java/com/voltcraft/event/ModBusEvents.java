@@ -4,6 +4,7 @@ import com.voltcraft.VoltCraft;
 import com.voltcraft.blockentity.BreakerBlockEntity;
 import com.voltcraft.blockentity.CableBlockEntity;
 import com.voltcraft.blockentity.TerminalBlockEntity;
+import com.voltcraft.blockentity.ThreePhaseBreakerBlockEntity;
 import com.voltcraft.blockentity.TransformerBlockEntity;
 import com.voltcraft.electric.capability.CableEnergyHandler;
 import com.voltcraft.registry.ModBlockEntities;
@@ -45,6 +46,16 @@ public final class ModBusEvents {
                 Capabilities.EnergyStorage.BLOCK,
                 ModBlockEntities.BREAKER.get(),
                 (BreakerBlockEntity be, Direction side) -> {
+                    if (side == null) return be.inputHandler();
+                    return side == be.inputFace() ? be.inputHandler() : null;
+                }
+        );
+
+        // 三相空开仅在输入面暴露；跳闸时返回 BlockedHandler 拒收
+        event.registerBlockEntity(
+                Capabilities.EnergyStorage.BLOCK,
+                ModBlockEntities.THREE_PHASE_BREAKER.get(),
+                (ThreePhaseBreakerBlockEntity be, Direction side) -> {
                     if (side == null) return be.inputHandler();
                     return side == be.inputFace() ? be.inputHandler() : null;
                 }

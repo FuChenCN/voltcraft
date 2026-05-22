@@ -1,11 +1,12 @@
 package com.voltcraft.blockentity;
 
-import com.voltcraft.block.BreakerBlock;
+import com.voltcraft.block.ThreePhaseBreakerBlock;
 import com.voltcraft.block.CableBlock;
 import com.voltcraft.electric.CableTier;
 import com.voltcraft.electric.network.EnergyNetwork;
 import com.voltcraft.electric.network.NetworkManager;
 import com.voltcraft.electric.protection.BreakerState;
+import com.voltcraft.electric.protection.WiringState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -18,19 +19,23 @@ import net.neoforged.neoforge.energy.EnergyStorage;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 
 /**
- * 空开方块实体。
+ * 三相空气开关方块实体。
+ *
+ * 支持火线、零线、地线三线系统：
+ * - 输入面（左面）：零线、火线、地线三个端口
+ * - 输出面（右面）：零线、火线、地线三个端口
+ * - 正面：开关状态显示
  *
  * 跳闸阈值（设计文档 4.2，可调）：
  * - 电流 > 200% 额定 → 立刻跳闸（电磁脱扣模拟）
  * - 电流 > 120% 额定 持续 100 tick → 跳闸（热脱扣模拟）
- *
- * 当前阶段把"电流"近似为"通过本空开的 FE/t"。等接线端子完成后，
- * 短路检测会作为独立分支补上。
  */
-public class BreakerBlockEntity extends BlockEntity {
+public class ThreePhaseBreakerBlockEntity extends BlockEntity {
 
     private static final String NBT_BUFFER = "Buffer";
     private static final String NBT_OVERLOAD_TICKS = "OverloadTicks";
+    private static final String NBT_INPUT_WIRING = "InputWiring";
+    private static final String NBT_OUTPUT_WIRING = "OutputWiring";
 
     /** 设计文档 4.2 的阈值，后续会迁移到 ModConfigSpec。 */
     private static final double OVERLOAD_FACTOR_HOLD = 1.20;     // 120%
@@ -43,7 +48,11 @@ public class BreakerBlockEntity extends BlockEntity {
     private int overloadTicks;
     private long lastFlow;
 
-    public BreakerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state, CableTier tier) {
+    // 三线接线状态
+    private WiringState inputWiring = WiringState.CORRECT;
+    private WiringState outputWiring = WiringState.CORRECT;
+
+    public ThreePhaseBreakerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state, CableTier tier) {
         super(type, pos, state);
         this.tier = tier;
         int rate = tier.ratedTransfer();
@@ -61,21 +70,41 @@ public class BreakerBlockEntity extends BlockEntity {
     }
 
     private BreakerState currentState() {
-        return getBlockState().getValue(BreakerBlock.STATE);
+        return getBlockState().getValue(ThreePhaseBreakerBlock.STATE);
     }
 
     public Direction outputFace() {
-        Direction facing = getBlockState().getValue(BreakerBlock.FACING);
-        return BreakerBlock.getOutputFace(facing);
+        // 输出面是右面（相对于正面）
+        Direction facing = getBlockState().getValue(ThreePhaseBreakerBlock.FACING);
+        return facing.getClockWise();
     }
 
     public Direction inputFace() {
-        Direction facing = getBlockState().getValue(BreakerBlock.FACING);
-        return BreakerBlock.getInputFace(facing);
+        // 输入面是左面（相对于正面）
+        Direction facing = getBlockState().getValue(ThreePhaseBreakerBlock.FACING);
+        return facing.getCounterClockWise();
     }
 
     public long lastFlow() {
         return lastFlow;
+    }
+
+    public WiringState getInputWiring() {
+        return inputWiring;
+    }
+
+    public WiringState getOutputWiring() {
+        return outputWiring;
+    }
+
+    public void setInputWiring(WiringState wiring) {
+        this.inputWiring = wiring;
+        setChanged();
+    }
+
+    public void setOutputWiring(WiringState wiring) {
+        this.outputWiring = wiring;
+        setChanged();
     }
 
     public void serverTick() {
@@ -85,6 +114,12 @@ public class BreakerBlockEntity extends BlockEntity {
         BreakerState state = currentState();
         if (state.isTripped()) {
             lastFlow = 0;
+            return;
+        }
+
+        // 检查接线状态
+        if (inputWiring.isShort() || outputWiring.isShort()) {
+            trip(level, BreakerState.TRIPPED_SHORT);
             return;
         }
 
@@ -123,13 +158,27 @@ public class BreakerBlockEntity extends BlockEntity {
             lastFlow = 0;
             return;
         }
-        long pushed = outNet.pushEnergy(available, false);
+
+        // 根据接线状态调整能量传输效率
+        double efficiency = calculateEfficiency();
+        long pushed = outNet.pushEnergy((int)(available * efficiency), false);
         if (pushed > 0) {
             buffer.extractEnergy((int) Math.min(Integer.MAX_VALUE, pushed), false);
         }
         lastFlow = pushed;
 
         evaluateOverload(level, pushed);
+    }
+
+    private double calculateEfficiency() {
+        // 根据接线状态计算传输效率
+        if (inputWiring == WiringState.CORRECT && outputWiring == WiringState.CORRECT) {
+            return 1.0; // 正常效率
+        } else if (inputWiring == WiringState.MISSING_GROUND || outputWiring == WiringState.MISSING_GROUND) {
+            return 0.8; // 地线缺失，效率降低
+        } else {
+            return 0.5; // 其他故障，效率大幅降低
+        }
     }
 
     private void evaluateOverload(Level level, long flow) {
@@ -156,7 +205,7 @@ public class BreakerBlockEntity extends BlockEntity {
 
     private void trip(Level level, BreakerState reason) {
         overloadTicks = 0;
-        BlockState newState = getBlockState().setValue(BreakerBlock.STATE, reason);
+        BlockState newState = getBlockState().setValue(ThreePhaseBreakerBlock.STATE, reason);
         level.setBlock(getBlockPos(), newState, 3);
         // 清空 buffer：跳闸后存量电不应继续推送（避免合闸瞬间冲击）
         buffer.extractEnergy(buffer.getEnergyStored(), false);
@@ -167,7 +216,7 @@ public class BreakerBlockEntity extends BlockEntity {
     public void reset() {
         Level level = getLevel();
         if (level == null) return;
-        BlockState newState = getBlockState().setValue(BreakerBlock.STATE, BreakerState.CLOSED);
+        BlockState newState = getBlockState().setValue(ThreePhaseBreakerBlock.STATE, BreakerState.CLOSED);
         level.setBlock(getBlockPos(), newState, 3);
         overloadTicks = 0;
         setChanged();
@@ -187,6 +236,12 @@ public class BreakerBlockEntity extends BlockEntity {
             buffer.deserializeNBT(registries, tag.get(NBT_BUFFER));
         }
         overloadTicks = tag.getInt(NBT_OVERLOAD_TICKS);
+        if (tag.contains(NBT_INPUT_WIRING)) {
+            inputWiring = WiringState.valueOf(tag.getString(NBT_INPUT_WIRING));
+        }
+        if (tag.contains(NBT_OUTPUT_WIRING)) {
+            outputWiring = WiringState.valueOf(tag.getString(NBT_OUTPUT_WIRING));
+        }
     }
 
     @Override
@@ -194,6 +249,8 @@ public class BreakerBlockEntity extends BlockEntity {
         super.saveAdditional(tag, registries);
         tag.put(NBT_BUFFER, buffer.serializeNBT(registries));
         tag.putInt(NBT_OVERLOAD_TICKS, overloadTicks);
+        tag.putString(NBT_INPUT_WIRING, inputWiring.getSerializedName());
+        tag.putString(NBT_OUTPUT_WIRING, outputWiring.getSerializedName());
     }
 
     /** 跳闸时给输入面挂的"假"句柄：什么都不收。 */

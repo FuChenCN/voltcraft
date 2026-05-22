@@ -2,7 +2,9 @@ package com.voltcraft.integration.jade;
 
 import com.voltcraft.VoltCraft;
 import com.voltcraft.block.BreakerBlock;
+import com.voltcraft.block.ThreePhaseBreakerBlock;
 import com.voltcraft.blockentity.BreakerBlockEntity;
+import com.voltcraft.blockentity.ThreePhaseBreakerBlockEntity;
 import com.voltcraft.electric.protection.BreakerState;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
@@ -34,11 +36,17 @@ public enum BreakerJadeProvider implements IBlockComponentProvider, IServerDataP
 
     @Override
     public void appendServerData(CompoundTag data, BlockAccessor accessor) {
-        if (!(accessor.getBlockEntity() instanceof BreakerBlockEntity be)) return;
-        data.putString(KEY_STATE, accessor.getBlockState().getValue(BreakerBlock.STATE).getSerializedName());
-        data.putString(KEY_TIER, be.tier().getSerializedName());
-        data.putLong(KEY_FLOW, be.lastFlow());
-        data.putInt(KEY_RATED, be.tier().ratedTransfer());
+        if (accessor.getBlockEntity() instanceof BreakerBlockEntity be) {
+            data.putString(KEY_STATE, accessor.getBlockState().getValue(BreakerBlock.STATE).getSerializedName());
+            data.putString(KEY_TIER, be.tier().getSerializedName());
+            data.putLong(KEY_FLOW, be.lastFlow());
+            data.putInt(KEY_RATED, be.tier().ratedTransfer());
+        } else if (accessor.getBlockEntity() instanceof ThreePhaseBreakerBlockEntity tpbe) {
+            data.putString(KEY_STATE, accessor.getBlockState().getValue(ThreePhaseBreakerBlock.STATE).getSerializedName());
+            data.putString(KEY_TIER, tpbe.tier().getSerializedName());
+            data.putLong(KEY_FLOW, tpbe.lastFlow());
+            data.putInt(KEY_RATED, tpbe.tier().ratedTransfer());
+        }
     }
 
     @Override

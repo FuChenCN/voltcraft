@@ -44,17 +44,6 @@ public final class CableShapes {
         return CACHE[idx];
     }
 
-    public static VoxelShape getForConnections(boolean n, boolean s, boolean e, boolean w, boolean u, boolean d) {
-        int idx = 0;
-        if (n) idx |= 1;
-        if (s) idx |= 2;
-        if (w) idx |= 4;
-        if (e) idx |= 8;
-        if (d) idx |= 16;
-        if (u) idx |= 32;
-        return CACHE[idx];
-    }
-
     private static VoxelShape[] buildCache() {
         VoxelShape[] arr = new VoxelShape[64];
         for (int i = 0; i < 64; i++) {

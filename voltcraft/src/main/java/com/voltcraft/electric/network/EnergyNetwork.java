@@ -86,11 +86,6 @@ public final class EnergyNetwork {
         this.shortCircuitStaleTicks = 0;
     }
 
-    @Nullable
-    public BlockPos shortCircuitSource() {
-        return shortCircuitSource;
-    }
-
     public boolean hasShortCircuit() {
         return shortCircuitSource != null;
     }
