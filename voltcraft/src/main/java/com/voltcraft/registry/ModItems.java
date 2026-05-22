@@ -33,6 +33,28 @@ public final class ModItems {
             () -> new Item(new Item.Properties())
     );
 
+    // Nickel items (from garnierite ore)
+    public static final DeferredItem<Item> RAW_NICKEL = ITEMS.register(
+            "raw_nickel",
+            () -> new Item(new Item.Properties())
+    );
+
+    public static final DeferredItem<Item> NICKEL_INGOT = ITEMS.register(
+            "nickel_ingot",
+            () -> new Item(new Item.Properties())
+    );
+
+    // Lead items (from cerussite ore)
+    public static final DeferredItem<Item> RAW_LEAD = ITEMS.register(
+            "raw_lead",
+            () -> new Item(new Item.Properties())
+    );
+
+    public static final DeferredItem<Item> LEAD_INGOT = ITEMS.register(
+            "lead_ingot",
+            () -> new Item(new Item.Properties())
+    );
+
     // Parts items
     public static final DeferredItem<Item> SPRING = ITEMS.register(
             "spring",

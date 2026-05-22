@@ -49,6 +49,14 @@ public final class ModCreativeTabs {
                         output.accept(ModBlocks.DEEPSLATE_RHODONITE_ORE.get());
                         output.accept(ModItems.RAW_MANGANESE.get());
                         output.accept(ModItems.MANGANESE_INGOT.get());
+                        output.accept(ModBlocks.GARNIERITE_ORE.get());
+                        output.accept(ModBlocks.DEEPSLATE_GARNIERITE_ORE.get());
+                        output.accept(ModItems.RAW_NICKEL.get());
+                        output.accept(ModItems.NICKEL_INGOT.get());
+                        output.accept(ModBlocks.CERUSSITE_ORE.get());
+                        output.accept(ModBlocks.DEEPSLATE_CERUSSITE_ORE.get());
+                        output.accept(ModItems.RAW_LEAD.get());
+                        output.accept(ModItems.LEAD_INGOT.get());
                     })
                     .build());
 

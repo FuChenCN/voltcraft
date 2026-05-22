@@ -73,6 +73,48 @@ public final class ModBlocks {
                     .requiresCorrectToolForDrops())
     );
 
+    // Garnierite ore blocks (nickel ore)
+    public static final DeferredBlock<Block> GARNIERITE_ORE = registerWithItem(
+            "garnierite_ore",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.STONE)
+                    .destroyTime(3.0f)
+                    .explosionResistance(6.0f)
+                    .sound(SoundType.STONE)
+                    .requiresCorrectToolForDrops())
+    );
+
+    public static final DeferredBlock<Block> DEEPSLATE_GARNIERITE_ORE = registerWithItem(
+            "deepslate_garnierite_ore",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.DEEPSLATE)
+                    .destroyTime(4.5f)
+                    .explosionResistance(6.0f)
+                    .sound(SoundType.DEEPSLATE)
+                    .requiresCorrectToolForDrops())
+    );
+
+    // Cerussite ore blocks (lead ore)
+    public static final DeferredBlock<Block> CERUSSITE_ORE = registerWithItem(
+            "cerussite_ore",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.STONE)
+                    .destroyTime(3.0f)
+                    .explosionResistance(6.0f)
+                    .sound(SoundType.STONE)
+                    .requiresCorrectToolForDrops())
+    );
+
+    public static final DeferredBlock<Block> DEEPSLATE_CERUSSITE_ORE = registerWithItem(
+            "deepslate_cerussite_ore",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.DEEPSLATE)
+                    .destroyTime(4.5f)
+                    .explosionResistance(6.0f)
+                    .sound(SoundType.DEEPSLATE)
+                    .requiresCorrectToolForDrops())
+    );
+
     private static Map<CableTier, DeferredBlock<CableBlock>> createCables() {
         EnumMap<CableTier, DeferredBlock<CableBlock>> map = new EnumMap<>(CableTier.class);
         for (CableTier tier : CableTier.values()) {
