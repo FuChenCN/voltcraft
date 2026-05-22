@@ -14,9 +14,10 @@ public final class ModCreativeTabs {
     public static final DeferredRegister<CreativeModeTab> TABS =
             DeferredRegister.create(Registries.CREATIVE_MODE_TAB, VoltCraft.MOD_ID);
 
-    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> MAIN =
-            TABS.register("main", () -> CreativeModeTab.builder()
-                    .title(Component.translatable("itemGroup.voltcraft"))
+    /** 设备标签页：电缆、变压器、空开、端子 */
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> EQUIPMENT =
+            TABS.register("equipment", () -> CreativeModeTab.builder()
+                    .title(Component.translatable("itemGroup.voltcraft.equipment"))
                     .icon(() -> ModBlocks.CABLES.get(CableTier.LOW).get().asItem().getDefaultInstance())
                     .displayItems((parameters, output) -> {
                         for (CableTier tier : CableTier.values()) {
@@ -31,6 +32,19 @@ public final class ModCreativeTabs {
                         for (CableTier tier : CableTier.values()) {
                             output.accept(ModBlocks.TERMINALS.get(tier).get());
                         }
+                    })
+                    .build());
+
+    /** 矿物标签页：矿石、原材料 */
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> MINERALS =
+            TABS.register("minerals", () -> CreativeModeTab.builder()
+                    .title(Component.translatable("itemGroup.voltcraft.minerals"))
+                    .icon(() -> ModItems.HEMIMORPHITE.get().getDefaultInstance())
+                    .displayItems((parameters, output) -> {
+                        output.accept(ModBlocks.HEMIMORPHITE_ORE.get());
+                        output.accept(ModBlocks.DEEPSLATE_HEMIMORPHITE_ORE.get());
+                        output.accept(ModItems.RAW_HEMIMORPHITE.get());
+                        output.accept(ModItems.HEMIMORPHITE.get());
                     })
                     .build());
 

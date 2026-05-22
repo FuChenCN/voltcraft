@@ -1,5 +1,11 @@
 {
   "itemGroup.voltcraft": "伏特工艺",
+  "itemGroup.voltcraft.equipment": "伏特工艺 - 设备",
+  "itemGroup.voltcraft.minerals": "伏特工艺 - 矿物",
+  "block.voltcraft.hemimorphite_ore": "异极矿矿石",
+  "block.voltcraft.deepslate_hemimorphite_ore": "深层异极矿矿石",
+  "item.voltcraft.raw_hemimorphite": "粗异极矿",
+  "item.voltcraft.hemimorphite": "异极矿",
   "block.voltcraft.low_voltage_cable": "低压电缆 (220V)",
   "block.voltcraft.medium_voltage_cable": "中压电缆 (10kV)",
   "block.voltcraft.high_voltage_cable": "高压电缆 (35kV)",
